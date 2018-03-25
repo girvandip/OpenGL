@@ -65,6 +65,18 @@ target_link_libraries(tugas01_triangle
 set_target_properties(tugas01_triangle PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas01_triangle/")
 create_target_launcher(tugas01_triangle WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas01_triangle/")
 
+# Tugas 02 Car (no shader)
+add_executable(tugas02_car
+	tugas02_car/main.cpp
+)
+target_link_libraries(tugas02_car
+	${ALL_LIBS}
+)
+# Xcode and Visual working directories
+set_target_properties(tugas02_car PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas02_car/")
+create_target_launcher(tugas02_car WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas02_car/")
+
+
 # Tugas 01 Triangle (shader)
 add_executable(tugas01_triangle_shader
 	tugas01_triangle_shader/main.cpp
