@@ -1,47 +1,98 @@
+#include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <common/core/Engine.hpp>
-#include <stdio.h>
-#include <stdlib.h>
 
-// This is the callback we'll be registering with GLFW for errors.
-// It'll just print out the error to the STDERR stream.
-void error_callback(int error, const char *description) {
-  fputs(description, stderr);
-}
+// setting
+const unsigned int WIDTH = 800;
+const unsigned int HEIGHT = 600;
 
-// This is the callback we'll bse registering with GLFW for keyboard handling.
-// The only thing we're doing here is setting up the window to close when we
-// press ESC
-void key_callback(GLFWwindow *window, int key, int scancode, int action,
-                  int mods) {
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-    glfwSetWindowShouldClose(window, GL_TRUE);
-  } else if (key == GLFW_KEY_D && action == GLFW_PRESS) {
-    Engine::bgColor[0] = 0.5f;
-    Engine::bgColor[1] = 0.3f;
-    Engine::bgColor[2] =
-        Engine::bgColor[2] > 1.0f ? 0.0f : Engine::bgColor[2] + 0.1;
-  } else if (key == GLFW_KEY_B && action == GLFW_PRESS) {
-    Engine::bgColor[0] = 0.0f;
-    Engine::bgColor[1] = 0.0f;
-    Engine::bgColor[2] = 0.0f;
-  }
+// vertex shader
+const char *vertexShaderSource = R"glsl(
+#version 410 core
+in vec2 position;
+void main()
+{
+ gl_Position = vec4(position, 0.0, 1.0);
 }
+)glsl";
+
+// fragment shader
+const char *fragmentShaderSource = R"glsl(
+#version 410 core
+out vec4 FragColor;
+void main()
+{
+ FragColor = vec4(1.0f, 0.5f, 0.5f, 1.0f);
+}
+)glsl";
 
 int main() {
-  Engine::init(640, 480, "OpenGL | Triangle with Shader");
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  auto engine = *Engine::instance();
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "hello", NULL, NULL);
+	if (window == NULL) {
+		glfwTerminate();
+		return -1;
+	}
+	glfwMakeContextCurrent(window);
 
-  engine.setKeyCallback(key_callback);
-  engine.setErrorCallback(error_callback);
+	glewInit();
+	// compile vertex shader
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
 
-  engine.loadShader("shader.vertex", "shader.fragment");
+	// compile fragment shader
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
 
-  engine.loop([&]() -> void { glDrawArrays(GL_TRIANGLES, 0, 3); });
+	// combining shaders
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
 
-  engine.destroy();
+	// NDC
+	float vertices[] = {
+		-0.5f,-0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		0.0f, 0.5f, 0.0f
+	};
 
-  return 0;
+	// init VAO dan VBO
+	unsigned int VBO, VAO;
+	// generate VAO dan VBO
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	// bind VAO
+	glBindVertexArray(VAO); // sudah nyatu dengan window
+							// bind VBO to VAO 
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	// copy vertices to buffer memory
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// parse data
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	while (!glfwWindowShouldClose(window)) {
+		// load program
+		glUseProgram(shaderProgram);
+		// bind VAO tiap kali menggambar
+		glBindVertexArray(VAO);
+
+		// gambar segitiga
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glfwTerminate();
+	return 0;
 }
