@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 
 // setting
-const unsigned int WIDTH = 600;
+const unsigned int WIDTH = 800;
 const unsigned int HEIGHT = 600;
 
 // vertex shader
@@ -22,7 +22,7 @@ const char *fragmentShaderSource = R"glsl(
 out vec4 FragColor;
 void main()
 {
- FragColor = vec4(1.0f, 0.5f, 0.5f, 1.0f);
+ FragColor = vec4(0.0f, 1.0f, 0.5f, 1.0f);
 }
 )glsl";
 
@@ -73,9 +73,18 @@ int main() {
 
 	// NDC
 	float vertices[] = {
-		0.0f, 0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f
+		0.1f, 0.25f, 0.0f,
+		-0.1f, 0.25f, 0.0f,
+		-0.25f, 0.0f, 0.0f,
+		-0.25f, 0.0f, 0.0f,
+		0.1f, 0.25f, 0.0f,
+		0.25f, 0.0f, 0.0f,
+		-0.5f, 0.0f, 0.0f,
+		0.5f, 0.0f, 0.0f,
+		-0.5f, -0.25f, 0.0f,
+		-0.5f, -0.25f, 0.0f,
+		0.5f, 0.0f, 0.0f,
+		0.5f, -0.25f, 0.0f
 	};
 
 	// init VAO dan VBO
@@ -104,12 +113,12 @@ int main() {
 		glBindVertexArray(VAO);
 
 		// gambar segitiga
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawArrays(GL_TRIANGLES, 0, 12);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-		rotateVertices(vertices, 3, 0, 0, 0.01);
+		//rotateVertices(vertices, 3, 0, 0, 0.01);
 	}
 
 	glfwTerminate();
