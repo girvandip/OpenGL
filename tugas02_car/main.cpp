@@ -12,6 +12,7 @@
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
+#define pi 3.14159
 
 void drawCircle( GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOfSides );
 
@@ -119,13 +120,13 @@ int main( void )
 
 void drawCircle( GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOfSides )
 {
-    int numberOfVertices = numberOfSides + 2;
+    GLint numberOfVertices = numberOfSides + 2;
     
-    GLfloat twicePi = 2.0f * M_PI;
+    GLfloat twicePi = 2.0f * pi;
     
-    GLfloat circleVerticesX[numberOfVertices];
-    GLfloat circleVerticesY[numberOfVertices];
-    GLfloat circleVerticesZ[numberOfVertices];
+    GLfloat circleVerticesX[362];
+    GLfloat circleVerticesY[362];
+    GLfloat circleVerticesZ[362];
     
     circleVerticesX[0] = x;
     circleVerticesY[0] = y;
@@ -138,7 +139,7 @@ void drawCircle( GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOf
         circleVerticesZ[i] = z;
     }
     
-    GLfloat allCircleVertices[( numberOfVertices ) * 3];
+    GLfloat allCircleVertices[362 * 3];
     
     for ( int i = 0; i < numberOfVertices; i++ )
     {
