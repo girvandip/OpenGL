@@ -26,6 +26,16 @@ void main()
 }
 )glsl";
 
+// wheel shader
+const char *fragmentWheelShaderSource = R"glsl(
+#version 410 core
+out vec4 FragColor;
+void main()
+{
+ FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+}
+)glsl";
+
 void rotateVertices(float* vertices, int numberOfVertices, float centerX, float centerY, float angle) {
 	float angleSin = sin(angle);
 	float angleCos = cos(angle);
@@ -65,11 +75,22 @@ int main() {
 	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
 	glCompileShader(fragmentShader);
 
+	// compile fragment shader
+	GLuint wheelShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(wheelShader, 1, &fragmentWheelShaderSource, NULL);
+	glCompileShader(wheelShader);
+
 	// combining shaders
 	GLuint shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);
 	glLinkProgram(shaderProgram);
+
+	// wheel shader program
+	GLuint wheelShaderProgram = glCreateProgram();
+	glAttachShader(wheelShaderProgram, vertexShader);
+	glAttachShader(wheelShaderProgram, wheelShader);
+	glLinkProgram(wheelShaderProgram);
 
 	// NDC
 	float vertices[] = {
@@ -85,6 +106,18 @@ int main() {
 		-0.5f, -0.25f, 0.0f,
 		0.5f, 0.0f, 0.0f,
 		0.5f, -0.25f, 0.0f
+	};
+
+	float wheelRight[] = {
+		0.25f, -0.2f, 0.0f,
+		0.3f, -0.3f, 0.0f,
+		0.2f, -0.3f, 0.0f
+	};
+
+	float leftWheel[] = {
+		-0.25f, -0.2f, 0.0f,
+		-0.3f, -0.3f, 0.0f,
+		-0.2f, -0.3f, 0.0f
 	};
 
 	// init VAO dan VBO
@@ -115,10 +148,28 @@ int main() {
 		// gambar segitiga
 		glDrawArrays(GL_TRIANGLES, 0, 12);
 
+		// draw right wheel
+		glBufferData(GL_ARRAY_BUFFER, sizeof(wheelRight), wheelRight, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glUseProgram(wheelShaderProgram);
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		// draw left wheel
+		glBufferData(GL_ARRAY_BUFFER, sizeof(leftWheel), leftWheel, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glUseProgram(wheelShaderProgram);
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-		//rotateVertices(vertices, 3, 0, 0, 0.01);
+		rotateVertices(wheelRight, 3, 0.25, -0.25, 0.1);
+		rotateVertices(leftWheel, 3, -0.25, -0.25, 0.1);
 	}
 
 	glfwTerminate();
