@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 
 // setting
-const unsigned int WIDTH = 800;
+const unsigned int WIDTH = 600;
 const unsigned int HEIGHT = 600;
 
 // vertex shader
@@ -26,11 +26,25 @@ void main()
 }
 )glsl";
 
+void rotateVertices(float* vertices, int numberOfVertices, float centerX, float centerY, float angle) {
+	float angleSin = sin(angle);
+	float angleCos = cos(angle);
+
+	for (int i = 0; i < numberOfVertices*3; i += 3) {
+		vertices[i] -= centerX;
+		vertices[i+1] -= centerY;
+		// rotate point
+		float xnew = vertices[i] * angleCos - vertices[i+1] * angleSin;
+		float ynew = vertices[i] * angleSin + vertices[i+1] * angleCos;
+
+		vertices[i] = xnew + centerX;
+		vertices[i+1] = ynew + centerY;
+	}
+
+}
+
 int main() {
 	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "hello", NULL, NULL);
 	if (window == NULL) {
@@ -39,6 +53,7 @@ int main() {
 	}
 	glfwMakeContextCurrent(window);
 
+	glewExperimental = GL_TRUE;
 	glewInit();
 	// compile vertex shader
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -58,9 +73,9 @@ int main() {
 
 	// NDC
 	float vertices[] = {
-		-0.5f,-0.5f, 0.0f,
+		0.0f, 0.5f, 0.0f,
 		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f
+		-0.5f, -0.5f, 0.0f
 	};
 
 	// init VAO dan VBO
@@ -73,14 +88,16 @@ int main() {
 							// bind VBO to VAO 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-	// copy vertices to buffer memory
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	while (!glfwWindowShouldClose(window)) { 
+		glClear(GL_COLOR_BUFFER_BIT);
 
-	// parse data
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
+		// copy vertices to buffer memory
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	while (!glfwWindowShouldClose(window)) {
+		// parse data
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+
 		// load program
 		glUseProgram(shaderProgram);
 		// bind VAO tiap kali menggambar
@@ -91,6 +108,8 @@ int main() {
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		rotateVertices(vertices, 3, 0, 0, 0.01);
 	}
 
 	glfwTerminate();
