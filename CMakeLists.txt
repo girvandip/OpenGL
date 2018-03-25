@@ -96,6 +96,25 @@ create_target_launcher(tugas01_triangle_shader WORKING_DIRECTORY "${CMAKE_CURREN
 SOURCE_GROUP(common REGULAR_EXPRESSION ".*/common/.*" )
 SOURCE_GROUP(shaders REGULAR_EXPRESSION ".*/.*hlsl" )
 
+# Tugas 02 Car (shader)
+add_executable(tugas02_car_shader
+	tugas02_car_shader/main.cpp
+	common/core/Engine.cpp
+	common/core/Engine.hpp
+
+  tugas02_car_shader/shader.fragment
+	tugas02_car_shader/shader.vertex
+)
+target_link_libraries(tugas02_car_shader
+	${ALL_LIBS}
+)
+# Xcode and Visual working directories
+set_target_properties(tugas02_car_shader PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas02_car_shader/")
+create_target_launcher(tugas02_car_shader WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas02_car_shader/")
+
+SOURCE_GROUP(common REGULAR_EXPRESSION ".*/common/.*" )
+SOURCE_GROUP(shaders REGULAR_EXPRESSION ".*/.*hlsl" )
+
 if (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 add_custom_command(
    TARGET tugas01_triangle POST_BUILD
@@ -103,8 +122,18 @@ add_custom_command(
 )
 
 add_custom_command(
+   TARGET tugas02_car POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas02_car${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas02_car/"
+)
+
+add_custom_command(
    TARGET tugas01_triangle_shader POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas01_triangle_shader${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas01_triangle_shader/"
+)
+
+add_custom_command(
+   TARGET tugas02_car_shader POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas02_car_shader${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas02_car_shader/"
 )
 
 elseif (${CMAKE_GENERATOR} MATCHES "Xcode" )
