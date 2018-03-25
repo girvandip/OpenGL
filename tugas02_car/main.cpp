@@ -54,6 +54,14 @@ int main( void )
         420, 220, 0.0 // bottom right corner
     };
     
+    GLfloat color_kotak[] =
+    {
+        255,0,0,
+        255,0,0,
+        0,0,0,
+        0,0,0
+    };
+    
     float segitiga_kanan [] =
     {
         350, 280, 0.0,
@@ -67,6 +75,13 @@ int main( void )
         250, 250, 0.0,
         215, 250, 0.0
         
+    };
+    
+    GLfloat color_segitiga[] =
+    {
+        255,0,0,
+        0,0,0,
+        0,0,0
     };
     
     glViewport( 0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT ); // specifies the part of the window to which OpenGL will draw (in pixels), convert from normalised to pixels
@@ -83,28 +98,39 @@ int main( void )
         // Render OpenGL here
         
         glEnableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're using a vertex array for fixed-function attribute
+        glEnableClientState(GL_COLOR_ARRAY);
         glVertexPointer( 3, GL_FLOAT, 0, kotak_atas ); // point to the vertices to be used
+        glColorPointer(3, GL_FLOAT, 0, color_kotak);
         glDrawArrays( GL_QUADS, 0, 4 ); // draw the vertixes
+        glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're finished using the vertex arrayattribute
         
         glEnableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're using a vertex array for fixed-function attribute
+        glEnableClientState(GL_COLOR_ARRAY);
         glVertexPointer( 3, GL_FLOAT, 0, kotak_bawah ); // point to the vertices to be used
+        glColorPointer(3, GL_FLOAT, 0, color_kotak);
         glDrawArrays( GL_QUADS, 0, 4 ); // draw the vertixes
+        glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're finished using the vertex arrayattribute
         
         glEnableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're using a vertex array for fixed-function attribute
+        glEnableClientState(GL_COLOR_ARRAY);
         glVertexPointer( 3, GL_FLOAT, 0, segitiga_kanan ); // point to the vertices to be used
+        glColorPointer(3, GL_FLOAT, 0, color_segitiga);
         glDrawArrays( GL_TRIANGLES, 0, 3 ); // draw the vertixes
+        glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're finished using the vertex arrayattribute
         
         glEnableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're using a vertex array for fixed-function attribute
+        glEnableClientState(GL_COLOR_ARRAY);
         glVertexPointer( 3, GL_FLOAT, 0, segitiga_kiri ); // point to the vertices to be used
+        glColorPointer(3, GL_FLOAT, 0, color_segitiga);
         glDrawArrays( GL_TRIANGLES, 0, 3 ); // draw the vertixes
+        glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're finished using the vertex arrayattribute
         
         drawCircle( 250, 220, 0, 20, 360 );
         drawCircle( 360, 220, 0, 20, 360 );
-        
         
         //swap front and back buffers
         glfwSwapBuffers(window);
