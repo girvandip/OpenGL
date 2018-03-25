@@ -81,22 +81,6 @@ target_link_libraries(tugas01_triangle_shader
 set_target_properties(tugas01_triangle_shader PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas01_triangle_shader/")
 create_target_launcher(tugas01_triangle_shader WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas01_triangle_shader/")
 
-# Tugas 01 Triangle (shader with interpolation)
-add_executable(tugas01_triangle_shader_interpolation
-	tugas01_triangle_shader_interpolation/main.cpp
-	common/core/Engine.cpp
-	common/core/Engine.hpp
-
-  tugas01_triangle_shader_interpolation/shader.fragment
-	tugas01_triangle_shader_interpolation/shader.vertex
-)
-target_link_libraries(tugas01_triangle_shader_interpolation
-	${ALL_LIBS}
-)
-# Xcode and Visual working directories
-set_target_properties(tugas01_triangle_shader_interpolation PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas01_triangle_shader_interpolation/")
-create_target_launcher(tugas01_triangle_shader_interpolation WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas01_triangle_shader_interpolation/")
-
 SOURCE_GROUP(common REGULAR_EXPRESSION ".*/common/.*" )
 SOURCE_GROUP(shaders REGULAR_EXPRESSION ".*/.*hlsl" )
 
@@ -109,11 +93,6 @@ add_custom_command(
 add_custom_command(
    TARGET tugas01_triangle_shader POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas01_triangle_shader${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas01_triangle_shader/"
-)
-
-add_custom_command(
-   TARGET tugas01_triangle_shader_interpolation POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas01_triangle_shader_interpolation${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas01_triangle_shader_interpolation/"
 )
 
 elseif (${CMAKE_GENERATOR} MATCHES "Xcode" )
