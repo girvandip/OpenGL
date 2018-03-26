@@ -1,6 +1,7 @@
 #include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <math.h>
 
 // setting
 const unsigned int WIDTH = 800;

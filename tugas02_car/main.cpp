@@ -109,42 +109,6 @@ int main( void )
         0,0,255,
         0,0,0
     };
-
-    float x = 250;
-    float y = 220;
-    float z = 0;
-    float radius = 20;
-    //Circle
-    int numberOfSides = 20;
-    int numberOfVertices = numberOfSides + 2;
-    
-    float twicePi = 2.0f * pi;
-    
-    float circleVerticesX[numberOfVertices];
-    float circleVerticesY[numberOfVertices];
-    float circleVerticesZ[numberOfVertices];
-    
-    circleVerticesX[0] = x;
-    circleVerticesY[0] = y;
-    circleVerticesZ[0] = z;
-    
-    for ( int i = 1; i < numberOfVertices; i++ )
-    {
-        circleVerticesX[i] = x + ( radius * cos( i *  twicePi / numberOfSides ) );
-        circleVerticesY[i] = y + ( radius * sin( i * twicePi / numberOfSides ) );
-        circleVerticesZ[i] = z;
-    }
-    
-    GLfloat allCircleVertices[numberOfVertices * 3];
-    
-    for ( int i = 0; i < numberOfVertices; i++ )
-    {
-        allCircleVertices[i * 3] = circleVerticesX[i];
-        allCircleVertices[( i * 3 ) + 1] = circleVerticesY[i];
-        allCircleVertices[( i * 3 ) + 2] = circleVerticesZ[i];
-    }
-
-
     
     glViewport( 0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT ); // specifies the part of the window to which OpenGL will draw (in pixels), convert from normalised to pixels
     glMatrixMode( GL_PROJECTION ); // projection matrix defines the properties of the camera that views the objects in the world coordinate frame. Here you typically set the zoom factor, aspect ratio and the near and far clipping planes
@@ -207,18 +171,6 @@ int main( void )
         glDrawArrays( GL_QUADS, 0, 4 ); // draw the vertixes
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're finished using the vertex arrayattribute
-
-        //Roda
-        // // drawCircle( 250, 220, 0, 20, 360 );
-        // // drawCircle( 360, 220, 0, 20, 360 );
-        // // drawFilledCircle(250, 220, 20);
-        // // drawFilledCircle(360, 220, 20);
-        // rotateVertices(allCircleVertices, numberOfVertices, 250, 220, 1);
-        // glEnableClientState( GL_VERTEX_ARRAY );
-        // glVertexPointer( 3, GL_FLOAT, 0, allCircleVertices );
-        // glColorPointer(3, GL_FLOAT, 0, color_segitiga);
-        // glDrawArrays( GL_TRIANGLE_FAN, 0, numberOfVertices);
-        // glDisableClientState( GL_VERTEX_ARRAY );
 
         //swap front and back buffers
         glfwSwapBuffers(window);
