@@ -109,15 +109,21 @@ int main() {
 	};
 
 	float wheelRight[] = {
-		0.25f, -0.2f, 0.0f,
+		0.2f, -0.2f, 0.0f,
 		0.3f, -0.3f, 0.0f,
-		0.2f, -0.3f, 0.0f
+		0.2f, -0.3f, 0.0f,
+		0.2f, -0.2f, 0.0f,
+		0.3f, -0.2f, 0.0f,
+		0.3f, -0.3f, 0.0f
 	};
 
 	float leftWheel[] = {
-		-0.25f, -0.2f, 0.0f,
+		-0.2f, -0.2f, 0.0f,
 		-0.3f, -0.3f, 0.0f,
-		-0.2f, -0.3f, 0.0f
+		-0.2f, -0.3f, 0.0f,
+		-0.2f, -0.2f, 0.0f,
+		-0.3f, -0.2f, 0.0f,
+		-0.3f, -0.3f, 0.0f
 	};
 
 	// init VAO dan VBO
@@ -154,7 +160,7 @@ int main() {
 		glEnableVertexAttribArray(0);
 		glUseProgram(wheelShaderProgram);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// draw left wheel
 		glBufferData(GL_ARRAY_BUFFER, sizeof(leftWheel), leftWheel, GL_STATIC_DRAW);
@@ -162,14 +168,14 @@ int main() {
 		glEnableVertexAttribArray(0);
 		glUseProgram(wheelShaderProgram);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-		rotateVertices(wheelRight, 3, 0.25, -0.25, 0.1);
-		rotateVertices(leftWheel, 3, -0.25, -0.25, 0.1);
+		rotateVertices(wheelRight, 6, 0.25, -0.25, 0.1);
+		rotateVertices(leftWheel, 6, -0.25, -0.25, 0.1);
 	}
 
 	glfwTerminate();
