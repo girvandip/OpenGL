@@ -15,6 +15,8 @@
 #define pi 3.14159
 
 void drawCircle( GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOfSides );
+void rotateVertices(float* vertices, int numberOfVertices, float centerX, float centerY, float angle);
+void drawFilledCircle(GLfloat x, GLfloat y, GLfloat radius);
 
 int main( void )
 {
@@ -53,6 +55,22 @@ int main( void )
         200, 220, 0.0, // bottom left corner
         420, 220, 0.0 // bottom right corner
     };
+
+    float roda_kiri[] =
+    {
+        240, 240, 0.0, // top left corner
+        260, 240, 0.0, // top right corner
+        260, 220, 0.0, // bottom right corner
+        240, 220, 0.0 // bottom left corner
+    };
+    
+    float roda_kanan[] =
+    {
+        350, 240, 0.0, // top right corner
+        370, 240, 0.0, // top left corner
+        370, 220, 0.0, // bottom left corner
+        350, 220, 0.0 // bottom right corner
+    };
     
     GLfloat color_kotak[] =
     {
@@ -83,6 +101,50 @@ int main( void )
         0,0,0,
         0,0,0
     };
+
+    GLfloat color_roda[] =
+    {
+        0,255,255,
+        0,0,255,
+        0,0,255,
+        0,0,0
+    };
+
+    float x = 250;
+    float y = 220;
+    float z = 0;
+    float radius = 20;
+    //Circle
+    int numberOfSides = 20;
+    int numberOfVertices = numberOfSides + 2;
+    
+    float twicePi = 2.0f * pi;
+    
+    float circleVerticesX[numberOfVertices];
+    float circleVerticesY[numberOfVertices];
+    float circleVerticesZ[numberOfVertices];
+    
+    circleVerticesX[0] = x;
+    circleVerticesY[0] = y;
+    circleVerticesZ[0] = z;
+    
+    for ( int i = 1; i < numberOfVertices; i++ )
+    {
+        circleVerticesX[i] = x + ( radius * cos( i *  twicePi / numberOfSides ) );
+        circleVerticesY[i] = y + ( radius * sin( i * twicePi / numberOfSides ) );
+        circleVerticesZ[i] = z;
+    }
+    
+    GLfloat allCircleVertices[numberOfVertices * 3];
+    
+    for ( int i = 0; i < numberOfVertices; i++ )
+    {
+        allCircleVertices[i * 3] = circleVerticesX[i];
+        allCircleVertices[( i * 3 ) + 1] = circleVerticesY[i];
+        allCircleVertices[( i * 3 ) + 2] = circleVerticesZ[i];
+    }
+
+
     
     glViewport( 0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT ); // specifies the part of the window to which OpenGL will draw (in pixels), convert from normalised to pixels
     glMatrixMode( GL_PROJECTION ); // projection matrix defines the properties of the camera that views the objects in the world coordinate frame. Here you typically set the zoom factor, aspect ratio and the near and far clipping planes
@@ -94,9 +156,8 @@ int main( void )
     //loop until the user closes the window
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
-        
         // Render OpenGL here
-        
+        //rotateVertices(kotak_atas, 4, 300, 265, 1);
         glEnableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're using a vertex array for fixed-function attribute
         glEnableClientState(GL_COLOR_ARRAY);
         glVertexPointer( 3, GL_FLOAT, 0, kotak_atas ); // point to the vertices to be used
@@ -129,9 +190,36 @@ int main( void )
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're finished using the vertex arrayattribute
         
-        drawCircle( 250, 220, 0, 20, 360 );
-        drawCircle( 360, 220, 0, 20, 360 );
+        rotateVertices(roda_kiri, 4, 250, 230, -0.01);
+        glEnableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're using a vertex array for fixed-function attribute
+        glEnableClientState(GL_COLOR_ARRAY);
+        glVertexPointer( 3, GL_FLOAT, 0, roda_kiri); // point to the vertices to be used
+        glColorPointer(3, GL_FLOAT, 0, color_roda);
+        glDrawArrays( GL_QUADS, 0, 4 ); // draw the vertixes
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're finished using the vertex arrayattribute
         
+        rotateVertices(roda_kanan, 4, 360, 230, -0.01);
+        glEnableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're using a vertex array for fixed-function attribute
+        glEnableClientState(GL_COLOR_ARRAY);
+        glVertexPointer( 3, GL_FLOAT, 0, roda_kanan); // point to the vertices to be used
+        glColorPointer(3, GL_FLOAT, 0, color_roda);
+        glDrawArrays( GL_QUADS, 0, 4 ); // draw the vertixes
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState( GL_VERTEX_ARRAY ); // tell OpenGL that you're finished using the vertex arrayattribute
+
+        //Roda
+        // // drawCircle( 250, 220, 0, 20, 360 );
+        // // drawCircle( 360, 220, 0, 20, 360 );
+        // // drawFilledCircle(250, 220, 20);
+        // // drawFilledCircle(360, 220, 20);
+        // rotateVertices(allCircleVertices, numberOfVertices, 250, 220, 1);
+        // glEnableClientState( GL_VERTEX_ARRAY );
+        // glVertexPointer( 3, GL_FLOAT, 0, allCircleVertices );
+        // glColorPointer(3, GL_FLOAT, 0, color_segitiga);
+        // glDrawArrays( GL_TRIANGLE_FAN, 0, numberOfVertices);
+        // glDisableClientState( GL_VERTEX_ARRAY );
+
         //swap front and back buffers
         glfwSwapBuffers(window);
         
@@ -157,6 +245,13 @@ void drawCircle( GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOf
     circleVerticesX[0] = x;
     circleVerticesY[0] = y;
     circleVerticesZ[0] = z;
+
+    GLfloat color_segitiga[] =
+    {
+        255,0,0,
+        255,0,0,
+        255,0,0
+    };
     
     for ( int i = 1; i < numberOfVertices; i++ )
     {
@@ -173,9 +268,64 @@ void drawCircle( GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOf
         allCircleVertices[( i * 3 ) + 1] = circleVerticesY[i];
         allCircleVertices[( i * 3 ) + 2] = circleVerticesZ[i];
     }
-    
+    //rotateVertices(kotak_atas, 4, 300, 265, 0.01);
+
     glEnableClientState( GL_VERTEX_ARRAY );
     glVertexPointer( 3, GL_FLOAT, 0, allCircleVertices );
+    glColorPointer(3, GL_FLOAT, 0, color_segitiga);
     glDrawArrays( GL_TRIANGLE_FAN, 0, numberOfVertices);
     glDisableClientState( GL_VERTEX_ARRAY );
+}
+
+void rotateVertices(float* vertices, int numberOfVertices, float centerX, float centerY, float angle) {
+ float angleSin = sin(angle);
+ float angleCos = cos(angle);
+
+ for (int i = 0; i < numberOfVertices*3; i += 3) {
+  vertices[i] -= centerX;
+  vertices[i+1] -= centerY;
+  // rotate point
+  float xnew = vertices[i] * angleCos - vertices[i+1] * angleSin;
+  float ynew = vertices[i] * angleSin + vertices[i+1] * angleCos;
+
+  vertices[i] = xnew + centerX;
+  vertices[i+1] = ynew + centerY;
+ }
+
+}
+
+
+void drawFilledCircle(GLfloat x, GLfloat y, GLfloat radius){
+    int i;
+    int triangleAmount = 20; //# of triangles used to draw circle
+    
+    //GLfloat radius = 0.8f; //radius
+    GLfloat twicePi = 2.0f * pi;
+    
+    glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(x, y); // center of circle
+        for(i = 0; i <= triangleAmount;i++) { 
+            glVertex2f(
+                    x + (radius * cos(i *  twicePi / triangleAmount)), 
+                    y + (radius * sin(i * twicePi / triangleAmount))
+            );
+            if(i%6 == 0)
+                glColor3f(1.0f, 0.0f, 0.0f);
+
+            if (i%6 == 1)
+                glColor3f(1.0f, 0.5f, 0.0f);
+
+            if (i%6 == 2)
+                glColor3f(1.0f, 1.0f, 0.0f);
+
+            if (i%6 == 3)
+                glColor3f(0.0f, 1.0f, 0.0f);
+
+            if (i%6 == 4)
+                glColor3f(0.0f, 0.0f, 1.0f);
+
+            if (i%6 == 5)
+                glColor3f(1.0f, 0.0f, 1.0f);
+        }
+    glEnd();
 }
