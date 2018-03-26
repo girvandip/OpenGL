@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <math.h>
+#include <vector>
 
 // setting
 const unsigned int WIDTH = 800;
@@ -9,7 +10,7 @@ const unsigned int HEIGHT = 600;
 
 // vertex shader
 const char *vertexShaderSource = R"glsl(
-#version 410 core
+#version 130
 in vec2 position;
 void main()
 {
@@ -19,7 +20,7 @@ void main()
 
 // fragment shader
 const char *fragmentShaderSource = R"glsl(
-#version 410 core
+#version 130
 out vec4 FragColor;
 void main()
 {
@@ -29,7 +30,7 @@ void main()
 
 // wheel shader
 const char *fragmentWheelShaderSource = R"glsl(
-#version 410 core
+#version 130
 out vec4 FragColor;
 void main()
 {
@@ -70,6 +71,19 @@ int main() {
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 	glCompileShader(vertexShader);
+
+	GLint Result = GL_FALSE;
+	int InfoLogLength;
+
+	// Check Vertex Shader
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &Result);
+	glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &InfoLogLength);
+	if ( InfoLogLength > 0 ){
+		std::vector<char> VertexShaderErrorMessage(InfoLogLength+1);
+		glGetShaderInfoLog(vertexShader, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+		printf("%s\n", &VertexShaderErrorMessage[0]);
+	}
+
 
 	// compile fragment shader
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
