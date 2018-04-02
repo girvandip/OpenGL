@@ -117,21 +117,26 @@ SOURCE_GROUP(shaders REGULAR_EXPRESSION ".*/.*hlsl" )
 
 # Tugas 03 Car Camera
 add_executable(tugas03_car_camera
-	tugas03_car_camera/main.cpp
-	tugas03_car_camera/cube.cpp
-	tugas03_car_camera/cube.hpp
-	tugas03_car_camera/fs.glsl
-	tugas03_car_camera/vs.glsl
+	# tugas03_car_camera/main.cpp
+	# tugas03_car_camera/cube.cpp
+	# tugas03_car_camera/cube.hpp
+	# tugas03_car_camera/camera.hpp
+	# tugas03_car_camera/fs.glsl
+	tugas03_car_camera/stb_image.h
+	tugas03_car_camera/ImageLoader.h
+	tugas03_car_camera/Shader.h
+	tugas03_car_camera/CarViewer.cpp
+	# tugas03_car_camera/vs.glsl
 )
 target_link_libraries(tugas03_car_camera
 	${ALL_LIBS}
 )
 # Xcode and Visual working directories
-set_target_properties(tugas03_car_camera PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas03_car_camera/“)
-create_target_launcher(tugas03_car_camera WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas03_car_camera/“)
+set_target_properties(tugas03_car_camera PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas03_car_camera/")
+create_target_launcher(tugas03_car_camera WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas03_car_camera/")
 
-SOURCE_GROUP(cube REGULAR_EXPRESSION “cube.*” )
-SOURCE_GROUP(gals REGULAR_EXPRESSION “*.glsl” )
+# SOURCE_GROUP(cube REGULAR_EXPRESSION "cube.*" )
+# SOURCE_GROUP(gals REGULAR_EXPRESSION "*.glsl" )
 
 if (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 add_custom_command(
@@ -146,7 +151,7 @@ add_custom_command(
 
 add_custom_command(
    TARGET tugas03_car_camera POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas03_car_camera${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas03_car_camera/“
+   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas03_car_camera${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas03_car_camera/"
 )
 
 add_custom_command(

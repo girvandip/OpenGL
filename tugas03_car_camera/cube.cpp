@@ -1,4 +1,4 @@
-#include "cube.h"
+#include "cube.hpp"
 
 /* Cube vertices in a right-handed unit cube */
 const float cubeVertices[] = {

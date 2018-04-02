@@ -1,429 +1,330 @@
-#include <math.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <GL/glew.h>
-#include <SDL/SDL.h>
-#include "cube.h"
+//#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include "stb_image.h"
 
-typedef struct MatrixStackNode {
-    struct MatrixStackNode *next;
-    float matrix[16];
-} MatrixStackNode;
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-typedef struct MatrixStack {
-    MatrixStackNode *top;
-} MatrixStack;
+#include "camera.hpp"
+#include "Shader.h"
+#include <iostream>
 
-static void push(MatrixStack *stack);
-static void pop(MatrixStack *stack);
-static void makeIdentity(float *mat);
-static void makePerspective(float *mat, float width, float height, float near, float far);
-static void translate(float *mat, float x, float y, float z);
-static void scale(float *mat, float amount);
-static void rotate(float *mat, float x, float y, float z, float angle);
-static void multiply(float *mat1, float *mat2);
-static void makeQuaternion(float *q, float x, float y, float z, float angle);
-static void qMultiply(float *q1, float *q2);
-static void qMultiplyL(float *q1, float *q2);
-static void qToMat(float *mat, float *q);
-static void qNormalize(float *q);
-static void qRotate(float *q, float x, float y, float z, float angle);
-static char *readFile(const char *filename);
-static void die(const char *fmt, ...);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow *window);
 
-int main(int argc, char **argv) {
-    GLenum err;
-    int major, minor;
-    SDL_Event e;
-    int running;
-    GLuint vao, vbo, vs, fs, program;
-    GLint uModel, uView, uProjection;
-    char *source;
-    float view[16], projection[16];
-    MatrixStack model = {0};
-    double dt;
-    int now, then;
-    int x, y;
-    int dx, dy;
-    float cameraQ[4];
-    float cameraX[4], cameraY[4];
-    float temp[16];
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
 
-    if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
-        die("couldn't initialize SDL: %s", SDL_GetError());
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
 
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+// timing
+float deltaTime = 0.0f;	// time between current frame and last frame
+float lastFrame = 0.0f;
 
-    if(!SDL_SetVideoMode(800, 600, 32, SDL_OPENGL))
-        die("couldn't set SDL video mode: %s", SDL_GetError());
+int main()
+{
+    // glfw: initialize and configure
+    // ------------------------------
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    SDL_WM_SetCaption("3D Camera", "3D Camera");
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // uncomment this statement to fix compilation on OS X
+#endif
 
-    err = glewInit();
-    if(err != GLEW_OK)
-        die("couldn't initialize GLEW: %s", glewGetErrorString(err));
+    // glfw window creation
+    // --------------------
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    if(!(major == 4 && minor == 3))
-        die("OpenGL version must be 4.3 (found: %d.%d)", major, minor);
+    // glad: load all OpenGL function pointers
+    // ---------------------------------------
+    // if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    // {
+    //     std::cout << "Failed to initialize GLAD" << std::endl;
+    //     return -1;
+    // }
 
-    glViewport(0, 0, 800, 600);
-
-    glEnable(GL_CULL_FACE);
+    // configure global opengl state
+    // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    // build and compile our shader zprogram
+    // ------------------------------------
+    Shader ourShader("7.4.camera.vs", "7.4.camera.fs");
 
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    // ------------------------------------------------------------------
+    float vertices[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
-    glBufferData(GL_ARRAY_BUFFER, 6 * 4 * 3 * sizeof(float),
-        cubeVertices, GL_STATIC_DRAW);
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
+    // world space positions of our cubes
+    glm::vec3 cubePositions[] = {
+        glm::vec3( 0.0f,  0.0f,  0.0f),
+        glm::vec3( 2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3( 2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3( 1.3f, -2.0f, -2.5f),
+        glm::vec3( 1.5f,  2.0f, -2.5f),
+        glm::vec3( 1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
+    unsigned int VBO, VAO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    // texture coord attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
-    source = readFile("vs.glsl");
-    if(!source)
-        die("couldn't read vertex shader");
 
-    vs = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vs, 1, (const char **) &source, NULL);
-    free(source);
+    // load and create a texture 
+    // -------------------------
+    unsigned int texture1, texture2;
+    // texture 1
+    // ---------
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    unsigned char *data = stbi_load(FileSystem::getPath("feet.jpg").c_str(), &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+    // texture 2
+    // ---------
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    data = stbi_load(FileSystem::getPath("feet.png").c_str(), &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
 
-    source = readFile("fs.glsl");
-    if(!source)
-        die("couldn't read fragment shader");
+    // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
+    // -------------------------------------------------------------------------------------------
+    ourShader.use();
+    ourShader.setInt("texture1", 0);
+    ourShader.setInt("texture2", 1);
 
-    fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, (const char **) &source, NULL);
-    free(source);
 
-    glCompileShader(vs);
-    glCompileShader(fs);
+    // render loop
+    // -----------
+    while (!glfwWindowShouldClose(window))
+    {
+        // per-frame time logic
+        // --------------------
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
 
-    program = glCreateProgram();
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glUseProgram(program);
+        // input
+        // -----
+        processInput(window);
 
-    glDetachShader(program, vs);
-    glDetachShader(program, fs);
-    glDeleteShader(vs);
-    glDeleteShader(fs);
+        // render
+        // ------
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 
-    uModel = glGetUniformLocation(program, "model");
-    uView = glGetUniformLocation(program, "view");
-    uProjection = glGetUniformLocation(program, "projection");
+        // bind textures on corresponding texture units
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
 
-    makePerspective(projection, 800.0f, 600.0f, 1.0f, 100.0f);
-    makeIdentity(view);
-    push(&model);
-    makeIdentity(model.top->matrix);
+        // activate shader
+        ourShader.use();
 
-    glUniformMatrix4fv(uProjection, 1, GL_FALSE, projection);
+        // pass projection matrix to shader (note that in this case it could change every frame)
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        ourShader.setMat4("projection", projection);
 
-    running = 1;
-    dt = 0.0;
-    then = SDL_GetTicks();
-    SDL_WM_GrabInput(SDL_GRAB_ON);
-    SDL_WarpMouse(400, 300);
-    SDL_ShowCursor(0);
-    makeQuaternion(cameraQ, 0.0f, 0.0f, 0.0f, 0.0f);
-    makeQuaternion(cameraX, 0.0f, 0.0f, 0.0f, 0.0f);
-    makeQuaternion(cameraY, 0.0f, 0.0f, 0.0f, 0.0f);
-    while(running) {
-        while(SDL_PollEvent(&e)) {
-            switch(e.type) {
-                case SDL_QUIT:
-                    running = 0;
-                    break;
+        // camera/view transformation
+        glm::mat4 view = camera.GetViewMatrix();
+        ourShader.setMat4("view", view);
 
-                case SDL_KEYDOWN:
-                    switch(e.key.keysym.sym) {
-                        case SDLK_ESCAPE:
-                            running = 0;
-                            break;
+        // render boxes
+        glBindVertexArray(VAO);
+        for (unsigned int i = 0; i < 10; i++)
+        {
+            // calculate the model matrix for each object and pass it to shader before drawing
+            glm::mat4 model;
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            ourShader.setMat4("model", model);
 
-                        default:
-                            break;
-                    }
-            }
+            glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
-        SDL_GetMouseState(&x, &y);
-        dx = x - 400;
-        dy = y - 300;
-        if(!(dx == 0 && dy == 0)) {
-            /*rotate(view, dy / sqrt(dx * dx + dy * dy), dx / sqrt(dx * dx + dy * dy), 0, sqrt(dx * dx + dy * dy) * 0.005f);*/
-            /*qRotate(cameraQ, dy / sqrt(dx * dx + dy * dy), dx / sqrt(dx * dx + dy * dy), 0, sqrt(dx * dx + dy * dy) * 0.005f);*/
-            /*qRotate(cameraQ, 1.0f, 0.0f, 0.0f, (dy / sqrt(dx * dx + dy * dy)) * 0.05f);*/
-            /*qRotate(cameraQ, 0.0f, 1.0f, 0.0f, (dx / sqrt(dx * dx + dy * dy)) * 0.05f);*/
-            qRotate(cameraX, 0.0f, 1.0f, 0.0f, dx / sqrt(dx * dx + dy * dy) * 0.05f);
-            qRotate(cameraY, 1.0f, 0.0f, 0.0f, dy / sqrt(dx * dx + dy * dy) * 0.05f);
-            /*qNormalize(cameraQ);*/
-            /*qToMat(view, cameraQ);*/
-            qNormalize(cameraX);
-            qNormalize(cameraY);
-            qToMat(view, cameraX);
-            qToMat(temp, cameraY);
-            multiply(view, temp);
-            SDL_WarpMouse(400, 300);
-        }
-
-        now = SDL_GetTicks();
-        dt += (now - then) / 1000.0;
-        then = now;
-
-        while(dt > 1 / 60.0) {
-            rotate(model.top->matrix, 0.0f, 1.0f, 0.0f, 0.01f);
-            dt -= 1 / 60.0;
-        }
-
-        push(&model);
-        translate(model.top->matrix, 0.0f, 0.0f, -5.0f);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glUniformMatrix4fv(uModel, 1, GL_FALSE, model.top->matrix);
-        glUniformMatrix4fv(uView, 1, GL_FALSE, view);
-
-        pop(&model);
-
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
-        glDrawArrays(GL_TRIANGLE_STRIP, 8, 4);
-        glDrawArrays(GL_TRIANGLE_STRIP, 12, 4);
-        glDrawArrays(GL_TRIANGLE_STRIP, 16, 4);
-        glDrawArrays(GL_TRIANGLE_STRIP, 20, 4);
-
-        SDL_GL_SwapBuffers();
+        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+        // -------------------------------------------------------------------------------
+        glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 
-    pop(&model);
+    // optional: de-allocate all resources once they've outlived their purpose:
+    // ------------------------------------------------------------------------
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
 
-    glUseProgram(0);
-    glDeleteProgram(program);
-
-    glBindVertexArray(0);
-    glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &vbo);
-
-    SDL_Quit();
+    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // ------------------------------------------------------------------
+    glfwTerminate();
     return 0;
 }
 
-void push(MatrixStack *stack) {
-    MatrixStackNode *new;
+// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// ---------------------------------------------------------------------------------------------------------
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 
-    new = malloc(sizeof(MatrixStackNode));
-    if(!new)
-        die("couldn't allocate new matrix stack node");
-
-    if(stack->top)
-        memcpy(new->matrix, stack->top->matrix, sizeof(float) * 16);
-
-    new->next = stack->top;
-    stack->top = new;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
-void pop(MatrixStack *stack) {
-    MatrixStackNode *doomed;
-
-    if(!stack->top)
-        return;
-
-    doomed = stack->top;
-    stack->top = stack->top->next;
-    free(doomed);
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    // make sure the viewport matches the new window dimensions; note that width and 
+    // height will be significantly larger than specified on retina displays.
+    glViewport(0, 0, width, height);
 }
 
-void makeIdentity(float *mat) {
-    memset(mat, 0, sizeof(float) * 16);
 
-    mat[0] = 1.0f;
-    mat[5] = 1.0f;
-    mat[10] = 1.0f;
-    mat[15] = 1.0f;
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
-void makePerspective(float *mat, float width, float height, float near, float far) {
-    makeIdentity(mat);
-
-    mat[0] = height / width;
-    mat[10] = (far + near) / (near - far);
-    mat[11] = -1.0f;
-    mat[14] = 2 * far * near / (near - far);
-}
-
-void translate(float *mat, float x, float y, float z) {
-    float translation[16];
-
-    makeIdentity(translation);
-    translation[12] = x;
-    translation[13] = y;
-    translation[14] = z;
-
-    multiply(mat, translation);
-}
-
-void scale(float *mat, float amount) {
-    float scaling[16];
-
-    makeIdentity(scaling);
-    scaling[0] = amount;
-    scaling[5] = amount;
-    scaling[10] = amount;
-
-    multiply(mat, scaling);
-}
-
-void rotate(float *mat, float x, float y, float z, float amount) {
-    float rotation[16];
-    float s, c;
-
-    makeIdentity(rotation);
-
-    s = (float) sin(amount);
-    c = (float) cos(amount);
-
-    rotation[0] = x * x + (1 - x * x) * c;
-    rotation[1] = (1 - c) * x * y + z * s;
-    rotation[2] = (1 - c) * x * z - y * s;
-    rotation[4] = (1 - c) * x * y - z * s;
-    rotation[5] = y * y + (1 - y * y) * c;
-    rotation[6] = (1 - c) * y * z + x * s;
-    rotation[8] = (1 - c) * x * z + y * s;
-    rotation[9] = (1 - c) * y * z - x * s;
-    rotation[10] = z * z + (1 - z * z) * c;
-
-    multiply(mat, rotation);
-}
-
-void multiply(float *mat1, float *mat2) {
-    float result[16] = {0};
-    int i, j, k;
-
-    for(i = 0; i < 4; ++i)
-        for(j = 0; j < 4; ++j)
-            for(k = 0; k < 4; ++k)
-                result[i * 4 + j] += mat1[i * 4 + k] * mat2[k * 4 + j];
-
-    memcpy(mat1, result, sizeof(float) * 16);
-}
-
-void makeQuaternion(float *q, float x, float y, float z, float angle) {
-    q[0] = x * sin(angle / 2);
-    q[1] = y * sin(angle / 2);
-    q[2] = z * sin(angle / 2);
-    q[3] = cos(angle / 2);
-}
-
-void qMultiply(float *q1, float *q2) {
-    float result[4];
-
-    result[0] = q1[3] * q2[0] + q1[0] * q2[3] + q1[1] * q2[2] - q1[2] * q2[1];
-    result[1] = q1[3] * q2[1] + q1[1] * q2[3] + q1[2] * q2[0] - q1[0] * q2[2];
-    result[2] = q1[3] * q2[2] + q1[2] * q2[3] + q1[0] * q2[1] - q1[1] * q2[0];
-    result[3] = q1[3] * q2[3] - q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2];
-
-    memcpy(q1, result, sizeof(float) * 4);
-}
-
-void qMultiplyL(float *q1, float *q2) {
-    float result[4];
-
-    result[0] = q2[3] * q1[0] + q2[0] * q1[3] + q2[1] * q1[2] - q2[2] * q1[1];
-    result[1] = q2[3] * q1[1] + q2[1] * q1[3] + q2[2] * q1[0] - q2[0] * q1[2];
-    result[2] = q2[3] * q1[2] + q2[2] * q1[3] + q2[0] * q1[1] - q2[1] * q1[0];
-    result[3] = q2[3] * q1[3] - q2[0] * q1[0] - q2[1] * q1[1] - q2[2] * q1[2];
-
-    memcpy(q1, result, sizeof(float) * 4);
-}
-
-void qToMat(float *mat, float *q) {
-    makeIdentity(mat);
-
-    mat[0] = 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2];
-    mat[1] = 2 * q[0] * q[1] + 2 * q[3] * q[2];
-    mat[2] = 2 * q[0] * q[2] - 2 * q[3] * q[1];
-
-    mat[4] = 2 * q[0] * q[1] - 2 * q[3] * q[2];
-    mat[5] = 1 - 2 * q[0] * q[0] - 2 * q[2] * q[2];
-    mat[6] = 2 * q[1] * q[2] + 2 * q[3] * q[0];
-
-    mat[8] = 2 * q[0] * q[2] + 2 * q[3] * q[1];
-    mat[9] = 2 * q[1] * q[2] - 2 * q[3] * q[0];
-    mat[10] = 1 - 2 * q[0] * q[0] - 2 * q[1] * q[1];
-}
-
-void qNormalize(float *q) {
-    float d = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
-    q[0] /= d;
-    q[1] /= d;
-    q[2] /= d;
-    q[3] /= d;
-}
-
-void qRotate(float *q, float x, float y, float z, float angle) {
-    float rotation[4];
-    makeQuaternion(rotation, x, y, z, angle);
-    qMultiplyL(q, rotation);
-}
-
-char *readFile(const char *filename) {
-    FILE *f;
-    char *contents;
-    long length;
-
-    f = fopen(filename, "rb");
-    if(!f)
-        goto FAIL;
-
-    if(fseek(f, 0, SEEK_END) < 0)
-        goto CLOSE;
-
-    length = ftell(f);
-    if(length < 0)
-        goto CLOSE;
-
-    rewind(f);
-
-    contents = malloc(sizeof(char) * (length + 1));
-    if(!contents)
-        goto FREE;
-
-    if(fread(contents, sizeof(char), length, f) < length)
-        goto FREE;
-
-    contents[length] = 0;
-    fclose(f);
-    return contents;
-
-FREE:
-    free(contents);
-
-CLOSE:
-    fclose(f);
-
-FAIL:
-    return NULL;
-}
-
-void die(const char *fmt, ...) {
-    va_list ap;
-
-    fprintf(stderr, "error: ");
-
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
-
-    fprintf(stderr, "\n");
-
-    exit(EXIT_FAILURE);
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.ProcessMouseScroll(yoffset);
 }
