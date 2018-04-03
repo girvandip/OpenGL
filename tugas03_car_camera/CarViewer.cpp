@@ -12,7 +12,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow *window);
 void DrawCar(Shader&);
-
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 //---------------------------------------------------------------------------
 const int na = 36;        // vertex grid size
@@ -109,15 +109,11 @@ void sphere_exit()
 }
 void sphere_draw(Shader& ourShader)
 {
-	//glEnable(GL_CULL_FACE);
-	//glFrontFace(GL_CCW);
-	//glEnable(GL_LIGHTING);
-	//glEnable(GL_LIGHT0);
 	glm::vec3 spherePositions[] = {
-		glm::vec3(1.6f, -1.25f, 2.1f),
-		glm::vec3(-1.6f,-1.25f, -3.1f),
-		glm::vec3(1.6f, -1.25f, -3.1f),
-		glm::vec3(-1.6f,-1.25f, 2.1f)
+		glm::vec3(1.6f, -1.25f, 1.8f),
+		glm::vec3(-1.6f,-1.25f, -2.1f),
+		glm::vec3(1.6f, -1.25f, -2.1f),
+		glm::vec3(-1.6f,-1.25f, 1.8f),
 	};
 	glm::vec3 sphereScales = glm::vec3(0.185f, 0.185f, 0.1f);
 
@@ -129,7 +125,11 @@ void sphere_draw(Shader& ourShader)
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, spherePositions[i]);
 		model = glm::rotate(model, sphereRotation[i%2], glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, (float)glfwGetTime()*5, glm::vec3(0.0f, 0.0f, 1.0f));
+		if(i == 0 || i == 2) {
+			model = glm::rotate(model, (float)glfwGetTime()*5, glm::vec3(0.0f, 0.0f, -1.0f));
+		} else {
+			model = glm::rotate(model, (float)glfwGetTime()*5, glm::vec3(0.0f, 0.0f, 1.0f));
+		}
 		model = glm::scale(model, sphereScales);
 		ourShader.setMat4("model", model);
 
@@ -144,6 +144,7 @@ void sphere_draw(Shader& ourShader)
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -217,14 +218,14 @@ int main() {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
+	glfwSetScrollCallback(window, scroll_callback); 
 
 	if (glewInit() != GLEW_OK)
 		std::cout << "Error GLEW Init" << std::endl;
 	glEnable(GL_DEPTH_TEST);
 	sphere_init();
 	Shader prog("car.vert", "car.frag");
-
+	Shader prog2("car.vert", "car.frag");
 	unsigned int VBO, VAO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -245,11 +246,17 @@ int main() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 
-	ImageLoader texture1("container.jpg");
-	ImageLoader texture2("awesomeface.jpg");
+	ImageLoader texture1("metal.jpg");
+	ImageLoader texture2("blue.jpg");
+	ImageLoader texture3("black.jpg");
+	ImageLoader texture4("pink.jpg");
 	prog.use();
+	//prog2.use();
 	prog.setInt("texture1", 0);
-	prog.setInt("texture2", 1);
+	prog.setInt("texture2", 0);
+	prog.setInt("texture3", 0);
+	prog.setInt("texture4", 1);
+	prog2.setInt("texture3", 0);
 	unsigned int modelLoc = glGetUniformLocation(prog.ID, "model");
 	unsigned int viewLoc = glGetUniformLocation(prog.ID, "view");
 	unsigned int projectionLoc = glGetUniformLocation(prog.ID, "projection");
@@ -257,16 +264,16 @@ int main() {
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput(window);
-		glClearColor(0.1f, 0.5f, 0.5f, 1.0f);
+		glClearColor(5.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// bind textures on corresponding texture units
+		//bind textures on corresponding texture units
+		// glActiveTexture(GL_TEXTURE0);
+		// texture3.use();
 		glActiveTexture(GL_TEXTURE0);
-		texture1.use();
-		//glActiveTexture(GL_TEXTURE1);
-		//texture2.use();
-
-
+		texture4.use();
+		// glActiveTexture(GL_TEXTURE1);
+		// texture3.use();
 		prog.use();
 
 		float radius = 11.0f;
@@ -274,22 +281,34 @@ int main() {
 		glm::mat4 view = glm::mat4(1.0f);
 		
 		glm::mat4 projection = glm::mat4(1.0f);;
-		//model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
 		view = glm::lookAt(cameraFront * radius, glm::vec3(0.0, 0.0, 0.0), cameraUp);
 		projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		// retrieve the matrix uniform locations
+	
+		//zoom
+		projection = glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f);  
 
 		// pass them to the shaders (3 different ways)
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-		//sprog.setMat4("projection", projection);
 
-		// render box
-		sphere_draw(prog);
+		// render car
 		glBindVertexArray(VAO);
 		DrawCar(prog);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		glActiveTexture(GL_TEXTURE1);
+		texture3.use();
+		prog.use();
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		sphere_draw(prog);
+		//Render car
+		// texture1.use();
+		// glActiveTexture(GL_TEXTURE1);
+		// texture2.use();
+		// prog.use();
+		
 
 		glfwSwapBuffers(window);
 
@@ -297,12 +316,6 @@ int main() {
 	}
 	glfwTerminate();
 	return 0;
-}
-
-void processInput(GLFWwindow *window)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -353,24 +366,22 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 void DrawCar(Shader& ourShader) {
 
 	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f,  -0.25f,  2.625f),
-		glm::vec3(0.0f,  -1.0f, 3.75f),
-		glm::vec3(0.0f,  -1.0f, 1.0f),
-		glm::vec3(0.0f, 0, -1.0f),
-		glm::vec3(0.0f, 0.0f, -3.5f),
-		glm::vec3(0.0f, -1.0f, -4.25f),
-		glm::vec3(0.0f,  -1.0f, -3.0f),
-		glm::vec3(0.0f,  -1.0f, 2.1f)
+		glm::vec3(0.0f,  0.3f,  0.8f),
+		glm::vec3(0.0f,  -1.2f, 2.8f),
+		glm::vec3(0.0f,  -1.2f, -0.2f),
+		glm::vec3(0.0f, -0.5f, -2.8f),
+		glm::vec3(0.0f, -1.25f, -3.25f),
+		glm::vec3(0.0f,  -1.0f, -2.0f),
+		glm::vec3(0.0f,  -1.0f, 1.8f),
 	};
 	glm::vec3 cubeScales[] = {
-		glm::vec3(3.5f,  0.5f,  4.25f),
-		glm::vec3(3.5f,  1.0f, 2.0f),
+		glm::vec3(3.5f,  2.0f,  5.0f),
 		glm::vec3(3.5f,  1.0f, 1.0f),
-		glm::vec3(3.5f,  3.0f, 3.0f),
-		glm::vec3(3.5f,  1.0f, 2.0f),
+		glm::vec3(3.5f,  1.0f, 3.0f),
+		glm::vec3(3.5f,  0.5f, 2.15f),
 		glm::vec3(3.5f,  1.0f, 1.25f),
 		glm::vec3(2.5f,  1.0f, 1.25f),
-		glm::vec3(2.5f,  1.0f, 1.35f)
+		glm::vec3(2.5f,  1.0f, 1.35f),
 	};
 	glEnable(GL_DEPTH);
 	glm::mat4 model = glm::mat4(1.0f);
@@ -379,7 +390,7 @@ void DrawCar(Shader& ourShader) {
 	ourShader.setMat4("model", model);
 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-	for (unsigned int i = 1; i < 9; i++)
+	for (unsigned int i = 1; i < 8; i++)
 	{
 		// calculate the model matrix for each object and pass it to shader before drawing
 		glm::mat4 model = glm::mat4(1.0f);
@@ -392,4 +403,29 @@ void DrawCar(Shader& ourShader) {
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	}
+}
+
+void processInput(GLFWwindow *window)
+{
+    float cameraSpeed = 0.05f; // adjust accordingly
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+  if(fov >= 1.0f && fov <= 45.0f)
+  	fov -= yoffset;
+  if(fov <= 1.0f)
+  	fov = 1.0f;
+  if(fov >= 45.0f)
+  	fov = 45.0f;
 }
