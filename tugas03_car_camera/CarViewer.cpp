@@ -12,6 +12,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow *window);
 void DrawCar(Shader&);
+void DrawTriangle(Shader&);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 //---------------------------------------------------------------------------
@@ -155,6 +156,37 @@ float lastX = 800.0f / 2.0;
 float lastY = 600.0 / 2.0;
 float fov = 45.0f;
 
+float vertices_2[] = {
+	 -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	
+	 -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+
+	 -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+
+	 -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f
+};
+
 float vertices[] = {
 	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 	0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -233,8 +265,8 @@ int main() {
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
+	// glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	// glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_2), vertices_2, GL_STATIC_DRAW);
 	// position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -264,7 +296,7 @@ int main() {
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput(window);
-		glClearColor(5.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//bind textures on corresponding texture units
@@ -294,8 +326,12 @@ int main() {
 
 		// render car
 		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 		DrawCar(prog);
-
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_2), vertices_2, GL_STATIC_DRAW);
+		DrawTriangle(prog);
 		glActiveTexture(GL_TEXTURE1);
 		texture3.use();
 		prog.use();
@@ -362,6 +398,34 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 	cameraFront = glm::normalize(front);
 }
+void DrawTriangle(Shader& ourShader) {
+
+	glm::vec3 cubePositions[] = {
+		glm::vec3(0.0f, -0.35f, -2.8f),	
+	};
+	glm::vec3 cubeScales[] = {
+		glm::vec3(2.25f,  0.75f, 3.5f),
+	};
+	glEnable(GL_DEPTH);
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, cubePositions[0]);
+	model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::scale(model, cubeScales[0]);
+	ourShader.setMat4("model", model);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	for (unsigned int i = 1; i < 1; i++)
+	{
+		// calculate the model matrix for each object and pass it to shader before drawing
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, cubePositions[i]);
+		float angle = 20.0f * i;
+		model = glm::scale(model, cubeScales[i]);
+		//model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+		ourShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
+}
 
 void DrawCar(Shader& ourShader) {
 
@@ -369,7 +433,7 @@ void DrawCar(Shader& ourShader) {
 		glm::vec3(0.0f,  0.3f,  0.8f),
 		glm::vec3(0.0f,  -1.2f, 2.8f),
 		glm::vec3(0.0f,  -1.2f, -0.2f),
-		glm::vec3(0.0f, -0.5f, -2.8f),
+		// glm::vec3(0.0f, -0.5f, -2.8f),
 		glm::vec3(0.0f, -1.25f, -3.25f),
 		glm::vec3(0.0f,  -1.0f, -2.0f),
 		glm::vec3(0.0f,  -1.0f, 1.8f),
@@ -378,7 +442,7 @@ void DrawCar(Shader& ourShader) {
 		glm::vec3(3.5f,  2.0f,  5.0f),
 		glm::vec3(3.5f,  1.0f, 1.0f),
 		glm::vec3(3.5f,  1.0f, 3.0f),
-		glm::vec3(3.5f,  0.5f, 2.15f),
+		//glm::vec3(3.5f,  0.5f, 2.15f),
 		glm::vec3(3.5f,  1.0f, 1.25f),
 		glm::vec3(2.5f,  1.0f, 1.25f),
 		glm::vec3(2.5f,  1.0f, 1.35f),
@@ -399,9 +463,7 @@ void DrawCar(Shader& ourShader) {
 		model = glm::scale(model, cubeScales[i]);
 		//model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 		ourShader.setMat4("model", model);
-
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-
 	}
 }
 
