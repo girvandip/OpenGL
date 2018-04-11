@@ -13,6 +13,9 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow *window);
 void DrawCar(Shader&);
 void DrawTriangle(Shader&);
+void DrawWindow(Shader&);
+void DrawLight(Shader&);
+void DrawBrake(Shader&);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 //---------------------------------------------------------------------------
@@ -279,16 +282,19 @@ int main() {
 
 
 	ImageLoader texture1("metal.jpg");
-	ImageLoader texture2("blue.jpg");
-	ImageLoader texture3("black.jpg");
+	ImageLoader texture2("white.jpg");
+	ImageLoader texture3("gold.jpg");
 	ImageLoader texture4("pink.jpg");
+	ImageLoader texture5("awesomeface.jpg");
+
 	prog.use();
 	//prog2.use();
 	prog.setInt("texture1", 0);
 	prog.setInt("texture2", 0);
 	prog.setInt("texture3", 0);
-	prog.setInt("texture4", 1);
-	prog2.setInt("texture3", 0);
+	prog.setInt("texture4", 0);
+	prog.setInt("texture5", 0);
+
 	unsigned int modelLoc = glGetUniformLocation(prog.ID, "model");
 	unsigned int viewLoc = glGetUniformLocation(prog.ID, "view");
 	unsigned int projectionLoc = glGetUniformLocation(prog.ID, "projection");
@@ -314,6 +320,7 @@ int main() {
 		
 		glm::mat4 projection = glm::mat4(1.0f);;
 		view = glm::lookAt(cameraFront * radius, glm::vec3(0.0, 0.0, 0.0), cameraUp);
+		// view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 	
 		//zoom
@@ -332,19 +339,39 @@ int main() {
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_2), vertices_2, GL_STATIC_DRAW);
 		DrawTriangle(prog);
-		glActiveTexture(GL_TEXTURE1);
-		texture3.use();
+		
+		//Render wheel
+		glActiveTexture(GL_TEXTURE0);
+		texture1.use();
 		prog.use();
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 		sphere_draw(prog);
-		//Render car
-		// texture1.use();
-		// glActiveTexture(GL_TEXTURE1);
-		// texture2.use();
-		// prog.use();
-		
+
+		//Render window
+		glActiveTexture(GL_TEXTURE0);
+		texture2.use();
+		prog.use();
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		DrawWindow(prog);
+
+		//Render Light
+		glActiveTexture(GL_TEXTURE0);
+		texture3.use();
+		prog.use();
+		DrawLight(prog);
+
+		//Render Brake
+		glActiveTexture(GL_TEXTURE0);
+		texture5.use();
+		prog.use();
+		DrawBrake(prog);
 
 		glfwSwapBuffers(window);
 
@@ -412,19 +439,7 @@ void DrawTriangle(Shader& ourShader) {
 	model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::scale(model, cubeScales[0]);
 	ourShader.setMat4("model", model);
-
 	glDrawArrays(GL_TRIANGLES, 0, 36);
-	for (unsigned int i = 1; i < 1; i++)
-	{
-		// calculate the model matrix for each object and pass it to shader before drawing
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, cubePositions[i]);
-		float angle = 20.0f * i;
-		model = glm::scale(model, cubeScales[i]);
-		//model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-		ourShader.setMat4("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-	}
 }
 
 void DrawCar(Shader& ourShader) {
@@ -433,8 +448,7 @@ void DrawCar(Shader& ourShader) {
 		glm::vec3(0.0f,  0.3f,  0.8f),
 		glm::vec3(0.0f,  -1.2f, 2.8f),
 		glm::vec3(0.0f,  -1.2f, -0.2f),
-		// glm::vec3(0.0f, -0.5f, -2.8f),
-		glm::vec3(0.0f, -1.25f, -3.25f),
+		glm::vec3(0.0f, -1.22f, -3.25f),
 		glm::vec3(0.0f,  -1.0f, -2.0f),
 		glm::vec3(0.0f,  -1.0f, 1.8f),
 	};
@@ -442,26 +456,92 @@ void DrawCar(Shader& ourShader) {
 		glm::vec3(3.5f,  2.0f,  5.0f),
 		glm::vec3(3.5f,  1.0f, 1.0f),
 		glm::vec3(3.5f,  1.0f, 3.0f),
-		//glm::vec3(3.5f,  0.5f, 2.15f),
 		glm::vec3(3.5f,  1.0f, 1.25f),
 		glm::vec3(2.5f,  1.0f, 1.25f),
 		glm::vec3(2.5f,  1.0f, 1.35f),
 	};
 	glEnable(GL_DEPTH);
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, cubePositions[0]);
-	model = glm::scale(model, cubeScales[0]);
-	ourShader.setMat4("model", model);
-
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	for (unsigned int i = 1; i < 8; i++)
+	for (unsigned int i = 0; i < 6; i++)
 	{
 		// calculate the model matrix for each object and pass it to shader before drawing
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, cubePositions[i]);
-		float angle = 20.0f * i;
 		model = glm::scale(model, cubeScales[i]);
-		//model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+		ourShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
+}
+
+void DrawWindow(Shader& ourShader) {
+
+	glm::vec3 cubePositions[] = {
+		glm::vec3(0.0f, 0.6f, -1.8f),
+		glm::vec3(0.0f, 0.6f, 3.3f),
+		glm::vec3(1.8f, 0.6f, 0.8f),
+		glm::vec3(-1.8f, 0.6f, 0.8f),
+		glm::vec3(1.2f, -1.0f, -3.9f),
+		glm::vec3(-1.2f, -1.0f, -3.9f),
+	};
+	glm::vec3 cubeScales[] = {
+		glm::vec3(2.8f,  1.0f, 0.1f),
+		glm::vec3(2.8f,  1.0f, 0.1f),
+		glm::vec3(0.1f,  1.0f, 4.0f),	
+		glm::vec3(0.1f,  1.0f, 4.0f),
+		glm::vec3(0.35f,  0.35f, 0.1f),
+		glm::vec3(0.35f,  0.35f, 0.1f),
+	};
+	glEnable(GL_DEPTH);
+	for (unsigned int i = 0; i < 6; i++)
+	{
+		// calculate the model matrix for each object and pass it to shader before drawing
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, cubePositions[i]);
+		model = glm::scale(model, cubeScales[i]);
+		ourShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
+}
+
+void DrawLight(Shader& ourShader) {
+
+	glm::vec3 cubePositions[] = {
+		glm::vec3(1.2f, -0.7f, 3.3f),
+		glm::vec3(-1.2f, -0.7f, 3.3f),
+	};
+	glm::vec3 cubeScales[] = {
+		glm::vec3(0.35f,  0.25f, 0.1f),
+		glm::vec3(0.35f,  0.25f, 0.1f),
+	};
+	glEnable(GL_DEPTH);
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		// calculate the model matrix for each object and pass it to shader before drawing
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, cubePositions[i]);
+		model = glm::scale(model, cubeScales[i]);
+		ourShader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
+}
+
+void DrawBrake(Shader& ourShader) {
+
+	glm::vec3 cubePositions[] = {
+		glm::vec3(1.2f, -1.0f, 3.3f),
+		glm::vec3(-1.2f, -1.0f, 3.3f),
+	};
+	glm::vec3 cubeScales[] = {
+		glm::vec3(0.35f,  0.35f, 0.1f),
+		glm::vec3(0.35f,  0.35f, 0.1f),
+	};
+	glEnable(GL_DEPTH);
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		// calculate the model matrix for each object and pass it to shader before drawing
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, cubePositions[i]);
+		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::scale(model, cubeScales[i]);
 		ourShader.setMat4("model", model);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
