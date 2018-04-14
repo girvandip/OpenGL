@@ -140,7 +140,7 @@ create_target_launcher(tugas03_car_camera WORKING_DIRECTORY "${CMAKE_CURRENT_SOU
 
 # Tugas 04 Car Lighting
 add_executable(tugas04_car_lighting
-	# tugas04_car_lighting/main.cpp
+	tugas04_car_lighting/main.cpp
 	# tugas04_car_lighting/cube.cpp
 	# tugas04_car_lighting/cube.hpp
 	# tugas04_car_lighting/camera.hpp
@@ -148,7 +148,7 @@ add_executable(tugas04_car_lighting
 	tugas04_car_lighting/stb_image.h
 	tugas04_car_lighting/ImageLoader.h
 	tugas04_car_lighting/Shader.h
-	tugas04_car_lighting/CarViewer.cpp
+	# tugas04_car_lighting/CarViewer.cpp
 	# tugas04_car_lighting/vs.glsl
 )
 target_link_libraries(tugas04_car_lighting
