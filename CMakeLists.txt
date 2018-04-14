@@ -138,6 +138,29 @@ create_target_launcher(tugas03_car_camera WORKING_DIRECTORY "${CMAKE_CURRENT_SOU
 # SOURCE_GROUP(cube REGULAR_EXPRESSION "cube.*" )
 # SOURCE_GROUP(gals REGULAR_EXPRESSION "*.glsl" )
 
+# Tugas 04 Car Lighting
+add_executable(tugas04_car_lighting
+	# tugas04_car_lighting/main.cpp
+	# tugas04_car_lighting/cube.cpp
+	# tugas04_car_lighting/cube.hpp
+	# tugas04_car_lighting/camera.hpp
+	# tugas04_car_lighting/fs.glsl
+	tugas04_car_lighting/stb_image.h
+	tugas04_car_lighting/ImageLoader.h
+	tugas04_car_lighting/Shader.h
+	tugas04_car_lighting/CarViewer.cpp
+	# tugas04_car_lighting/vs.glsl
+)
+target_link_libraries(tugas04_car_lighting
+	${ALL_LIBS}
+)
+# Xcode and Visual working directories
+set_target_properties(tugas04_car_lighting PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas04_car_lighting/")
+create_target_launcher(tugas04_car_lighting WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas04_car_lighting/")
+
+# SOURCE_GROUP(cube REGULAR_EXPRESSION "cube.*" )
+# SOURCE_GROUP(gals REGULAR_EXPRESSION "*.glsl" )
+
 if (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 add_custom_command(
    TARGET tugas01_triangle POST_BUILD
@@ -162,6 +185,11 @@ add_custom_command(
 add_custom_command(
    TARGET tugas02_car_shader POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas02_car_shader${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas02_car_shader/"
+)
+
+add_custom_command(
+   TARGET tugas04_car_lighting POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas04_car_lighting${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas04_car_lighting/"
 )
 
 elseif (${CMAKE_GENERATOR} MATCHES "Xcode" )
