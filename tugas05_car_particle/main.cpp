@@ -484,7 +484,7 @@ int main() {
 	{
 		
 		processInput(window);
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClearColor(0.7f, 0.7f, 0.7f, 0.7f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Count time
@@ -576,24 +576,6 @@ int main() {
 			}
 		}
 
-
-		glm::vec3 lightPos(arrOfLightPos[0], arrOfLightPos[1], arrOfLightPos[2]);
-		//bind textures on corresponding texture units
-		glActiveTexture(GL_TEXTURE0);
-		texture3.use();
-		glActiveTexture(GL_TEXTURE0);
-		texture4.use();
-		glActiveTexture(GL_TEXTURE1);
-		texture3.use();
-		prog.use();
-
-		// be sure to activate shader when setting uniforms/drawing objects
-        prog.use();
-        prog.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-        prog.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        prog.setVec3("lightPos", lightPos);
-        prog.setVec3("viewPos", glm::vec3(0.0, 0.0, 0.0));
-
 		float radius = 11.0f;
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::mat4 view = glm::mat4(1.0f);
@@ -608,60 +590,9 @@ int main() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-		// render car
-		glBindVertexArray(VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		DrawCar(prog);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_2), vertices_2, GL_STATIC_DRAW);
-		DrawTriangle(prog);
+
+		// TODO: lampu belum ke render
 		
-		//Render wheel
-		glActiveTexture(GL_TEXTURE0);
-		texture1.use();
-		prog.use();
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-		sphere_draw(prog);
-
-		//Render window
-		glActiveTexture(GL_TEXTURE0);
-		texture2.use();
-		prog.use();
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-		glBindVertexArray(VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		DrawWindow(prog);
-
-		//Render Light
-		glActiveTexture(GL_TEXTURE0);
-		texture3.use();
-		prog.use();
-		DrawLight(prog);
-
-		//Render Brake
-		glActiveTexture(GL_TEXTURE0);
-		texture5.use();
-		prog.use();
-		DrawBrake(prog);
-		
-		// also draw the lamp object
-        lampShader.use();
-        lampShader.setMat4("projection", projection);
-        lampShader.setMat4("view", view);
-		model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(1.0f)); // a smaller cube
-        lampShader.setMat4("model", model);
-		glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);		
-
-
 		//DRAW SMOKE
 		int newparticles = (int)(delta*10000.0);
 		if (newparticles > (int)(0.016f*10000.0))
@@ -673,7 +604,7 @@ int main() {
 			ParticlesContainer[particleIndex].pos = glm::vec3(1.6f,-1.2f, 3.55f);
 
 			float spread = 1.5f;
-			glm::vec3 maindir = glm::vec3(0.0f, 8.0f, 8.0f);
+			glm::vec3 maindir = glm::vec3(0.0f, 0.0f, 8.0f);
 			// Very bad way to generate a random direction; 
 			// See for instance http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution instead,
 			// combined with some user-controlled parameters (main direction, spread, etc)
@@ -700,8 +631,6 @@ int main() {
 			
 		}
 
-
-
 		// Simulate all particles
 		int ParticlesCount = 0;
 		for(int i=0; i<MaxParticles; i++){
@@ -715,7 +644,7 @@ int main() {
 				if (p.life > 0.0f){
 
 					// Simulate simple physics : gravity only, no collisions
-					p.speed += glm::vec3(0.0f, 0.0f, 0.0f) * (float)delta * 0.5f;
+					p.speed += glm::vec3(0.0f, 50.0f, 0.0f) * (float)delta * 0.5f;
 					p.pos += p.speed * (float)delta;
 					p.cameradistance = glm::length2( p.pos - cameraPos );
 					//ParticlesContainer[i].pos += glm::vec3(0.0f,10.0f, 0.0f) * (float)delta;
@@ -838,8 +767,12 @@ int main() {
 		
 		for(int i=0; i<newRain; i++){
 			int rainIndex = FindUnusedRain();
-			RainContainer[rainIndex].life = 5.0f; // This particle will live 5 seconds.
-			RainContainer[rainIndex].pos = glm::vec3(0.0f, 6.0f, 0.0f);
+			RainContainer[rainIndex].life = 2.0f; // This particle will live 5 seconds.
+			RainContainer[rainIndex].pos = glm::vec3(
+				rand() % (3 - (-3) + 1) + (-3), 
+				6.0f,
+				rand() % (4 - (-4) + 1) + (-4)
+			);
 
 			float spread = 1.5f;
 			glm::vec3 maindir = glm::vec3(0.0f, -8.0f, 0.0f);
@@ -863,9 +796,9 @@ int main() {
 			RainContainer[rainIndex].r = 0;
 			RainContainer[rainIndex].g = 0;
 			RainContainer[rainIndex].b = 255;
-			RainContainer[rainIndex].a = 70;
+			RainContainer[rainIndex].a = 200;
 
-			RainContainer[rainIndex].size = (rand()%1000)/2000.0f + 0.1f;
+			RainContainer[rainIndex].size = 0.3f; // (rand()%1000)/2000.0f + 0.1f;
 			
 		}
 
@@ -1000,8 +933,78 @@ int main() {
 		glDisableVertexAttribArray(xyzsID);
 		glDisableVertexAttribArray(colorID);
 
-		glfwSwapBuffers(window);
+		glm::vec3 lightPos(arrOfLightPos[0], arrOfLightPos[1], arrOfLightPos[2]);
+		//bind textures on corresponding texture units
+		glActiveTexture(GL_TEXTURE0);
+		texture3.use();
+		glActiveTexture(GL_TEXTURE0);
+		texture4.use();
+		glActiveTexture(GL_TEXTURE1);
+		texture3.use();
+		// prog.use();
 
+		// be sure to activate shader when setting uniforms/drawing objects
+        prog.use();
+        prog.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+        prog.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        prog.setVec3("lightPos", lightPos);
+        prog.setVec3("viewPos", glm::vec3(0.0, 0.0, 0.0));
+
+		// render car
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		DrawCar(prog);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_2), vertices_2, GL_STATIC_DRAW);
+		DrawTriangle(prog);
+		
+		//Render wheel
+		glActiveTexture(GL_TEXTURE0);
+		texture1.use();
+		prog.use();
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		sphere_draw(prog);
+
+		//Render window
+		glActiveTexture(GL_TEXTURE0);
+		texture2.use();
+		prog.use();
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		DrawWindow(prog);
+
+		//Render Light
+		glActiveTexture(GL_TEXTURE0);
+		texture3.use();
+		prog.use();
+		DrawLight(prog);
+
+		//Render Brake
+		glActiveTexture(GL_TEXTURE0);
+		texture5.use();
+		prog.use();
+		DrawBrake(prog);	
+
+		// also draw the lamp object
+        lampShader.use();
+        lampShader.setMat4("projection", projection);
+        lampShader.setMat4("view", view);
+		model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(1.0f)); // a smaller cube
+        lampShader.setMat4("model", model);
+		glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);	
+		
+		// ending
+		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 	glfwTerminate();
