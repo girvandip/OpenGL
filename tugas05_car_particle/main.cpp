@@ -374,18 +374,24 @@ int main() {
 	GLuint xyzsID = glGetAttribLocation(particleProg.ID, "xyzs");
 	GLuint colorID = glGetAttribLocation(particleProg.ID, "color");   
 
-	static GLfloat* g_particule_position_size_data = new GLfloat[MaxParticles * 4];
-	static GLubyte* g_particule_color_data         = new GLubyte[MaxParticles * 4];
+	static GLfloat* ParticlePosition = new GLfloat[MaxParticles * 4];
+	static GLubyte* ParticleColor = new GLubyte[MaxParticles * 4];
 
 	for(int i=0; i<MaxParticles; i++){
 		ParticlesContainer[i].life = -1.0f;
 		ParticlesContainer[i].cameradistance = -1.0f;
 	}
 
+	static GLfloat* RainPosition = new GLfloat[MaxParticles * 4];
+	static GLubyte* RainColor         = new GLubyte[MaxParticles * 4];
+
 	for(int i=0; i<RainMaxParticles; i++){
 		RainContainer[i].life = -1.0f;
 		RainContainer[i].cameradistance = -1.0f;
 	}
+
+	static GLfloat* SplashPosition = new GLfloat[MaxParticles * 4];
+	static GLubyte* SplashColor         = new GLubyte[MaxParticles * 4];
 
 	for(int i=0; i<SplashMaxParticles; i++){
 		SplashContainer[i].life = -1.0f;
@@ -655,16 +661,16 @@ int main() {
 					//ParticlesContainer[i].pos += glm::vec3(0.0f,10.0f, 0.0f) * (float)delta;
 
 					// Fill the GPU buffer
-					g_particule_position_size_data[4*ParticlesCount+0] = p.pos.x;
-					g_particule_position_size_data[4*ParticlesCount+1] = p.pos.y;
-					g_particule_position_size_data[4*ParticlesCount+2] = p.pos.z;
+					ParticlePosition[4*ParticlesCount+0] = p.pos.x;
+					ParticlePosition[4*ParticlesCount+2] = p.pos.z;
+					ParticlePosition[4*ParticlesCount+1] = p.pos.y;
 												   
-					g_particule_position_size_data[4*ParticlesCount+3] = p.size;
+					ParticlePosition[4*ParticlesCount+3] = p.size;
 												   
-					g_particule_color_data[4*ParticlesCount+0] = p.r;
-					g_particule_color_data[4*ParticlesCount+1] = p.g;
-					g_particule_color_data[4*ParticlesCount+2] = p.b;
-					g_particule_color_data[4*ParticlesCount+3] = p.a;
+					ParticleColor[4*ParticlesCount+0] = p.r;
+					ParticleColor[4*ParticlesCount+1] = p.g;
+					ParticleColor[4*ParticlesCount+2] = p.b;
+					ParticleColor[4*ParticlesCount+3] = p.a;
 
 				}else{
 					// Particles that just died will be put at the end of the buffer in SortParticles();
@@ -684,11 +690,11 @@ int main() {
 		// http://www.opengl.org/wiki/Buffer_Object_Streaming
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glBufferData(GL_ARRAY_BUFFER, MaxParticles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-		glBufferSubData(GL_ARRAY_BUFFER, 0, ParticlesCount * sizeof(GLfloat) * 4, g_particule_position_size_data);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, ParticlesCount * sizeof(GLfloat) * 4, ParticlePosition);
 
 		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
 		glBufferData(GL_ARRAY_BUFFER, MaxParticles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-		glBufferSubData(GL_ARRAY_BUFFER, 0, ParticlesCount * sizeof(GLubyte) * 4, g_particule_color_data);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, ParticlesCount * sizeof(GLubyte) * 4, ParticleColor);
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -776,7 +782,7 @@ int main() {
 			RainContainer[rainIndex].pos = glm::vec3(
 				rand() % (3 - (-3) + 1) + (-3), 
 				6.0f,
-				rand() % (4 - (-4) + 1) + (-4)
+				rand() % (4 - (-6) + 1) + (-6)
 			);
 
 			float spread = 1.5f;
@@ -801,7 +807,7 @@ int main() {
 			RainContainer[rainIndex].r = 0;
 			RainContainer[rainIndex].g = 0;
 			RainContainer[rainIndex].b = 255;
-			RainContainer[rainIndex].a = 200;
+			RainContainer[rainIndex].a = 70;
 
 			RainContainer[rainIndex].size = 0.3f; // (rand()%1000)/2000.0f + 0.1f;
 			
@@ -828,30 +834,33 @@ int main() {
 					//RainContainer[i].pos += glm::vec3(0.0f,10.0f, 0.0f) * (float)delta;
 
 					// Fill the GPU buffer
-					g_particule_position_size_data[4*RainCount+0] = p.pos.x;
-					g_particule_position_size_data[4*RainCount+1] = p.pos.y;
-					g_particule_position_size_data[4*RainCount+2] = p.pos.z;
+					RainPosition[4*RainCount+0] = p.pos.x;
+					RainPosition[4*RainCount+1] = p.pos.y;
+					RainPosition[4*RainCount+2] = p.pos.z;
 												   
-					g_particule_position_size_data[4*RainCount+3] = p.size;
+					RainPosition[4*RainCount+3] = p.size;
 												   
-					g_particule_color_data[4*RainCount+0] = p.r;
-					g_particule_color_data[4*RainCount+1] = p.g;
-					g_particule_color_data[4*RainCount+2] = p.b;
-					g_particule_color_data[4*RainCount+3] = p.a;
+					RainColor[4*RainCount+0] = p.r;
+					RainColor[4*RainCount+1] = p.g;
+					RainColor[4*RainCount+2] = p.b;
+					RainColor[4*RainCount+3] = p.a;
 
 					//collision
-					if(p.pos.y < -2.0f) {
+					if(p.pos.y <= -1.8f) {
 						// printf("masuk sini \n");
 						int splashParticleIndex = FindUnusedSplash();
 						SplashContainer[splashParticleIndex].life = 0.05f;
 						SplashContainer[splashParticleIndex].pos = glm::vec3(p.pos.x, p.pos.y, p.pos.z);
-						SplashContainer[splashParticleIndex].speed = glm::vec3(0.0f, -5.0f, 0.0f);
+						// SplashContainer[splashParticleIndex].speed = glm::vec3(0.0f, 0.0f, 0.0f);
 						// Random color
 						SplashContainer[splashParticleIndex].r = 0.0f;
 						SplashContainer[splashParticleIndex].g = 0.0f;
-						SplashContainer[splashParticleIndex].b = 0.0f;
-						SplashContainer[splashParticleIndex].a = 255;
+						SplashContainer[splashParticleIndex].b = 150.0f;
+						SplashContainer[splashParticleIndex].a = 150.0f;
 						SplashContainer[splashParticleIndex].size = 0.5f;
+						
+						// kill the raindrops
+						RainContainer[i].life = -0.1f;
 					}
 
 				} else{
@@ -872,11 +881,11 @@ int main() {
 		// http://www.opengl.org/wiki/Buffer_Object_Streaming
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glBufferData(GL_ARRAY_BUFFER, RainMaxParticles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-		glBufferSubData(GL_ARRAY_BUFFER, 0, RainCount * sizeof(GLfloat) * 4, g_particule_position_size_data);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, RainCount * sizeof(GLfloat) * 4, RainPosition);
 
 		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
 		glBufferData(GL_ARRAY_BUFFER, RainMaxParticles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-		glBufferSubData(GL_ARRAY_BUFFER, 0, RainCount * sizeof(GLubyte) * 4, g_particule_color_data);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, RainCount * sizeof(GLubyte) * 4, RainColor);
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -964,14 +973,14 @@ int main() {
 				if (p.life > 0.0f) {
 					p.cameradistance = glm::length2(p.pos - cameraPos);
 					// Fill the GPU buffer
-					g_particule_position_size_data[4 * splashParticlesCount + 0] = p.pos.x;
-					g_particule_position_size_data[4 * splashParticlesCount + 1] = p.pos.y;
-					g_particule_position_size_data[4 * splashParticlesCount + 2] = p.pos.z;
-					g_particule_position_size_data[4 * splashParticlesCount + 3] = p.size;
-					g_particule_color_data[4 * splashParticlesCount + 0] = p.r;
-					g_particule_color_data[4 * splashParticlesCount + 1] = p.g;
-					g_particule_color_data[4 * splashParticlesCount + 2] = p.b;
-					g_particule_color_data[4 * splashParticlesCount + 3] = p.a;
+					SplashPosition[4 * splashParticlesCount + 0] = p.pos.x;
+					SplashPosition[4 * splashParticlesCount + 1] = p.pos.y;
+					SplashPosition[4 * splashParticlesCount + 2] = p.pos.z;
+					SplashPosition[4 * splashParticlesCount + 3] = p.size;
+					SplashColor[4 * splashParticlesCount + 0] = p.r;
+					SplashColor[4 * splashParticlesCount + 1] = p.g;
+					SplashColor[4 * splashParticlesCount + 2] = p.b;
+					SplashColor[4 * splashParticlesCount + 3] = p.a;
 				}
 				else {
 					// Particles that just died will be put at the end of the buffer in SortParticles()
@@ -988,11 +997,11 @@ int main() {
 		// http://www.opengl.org/wiki/Buffer_Object_Streaming
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glBufferData(GL_ARRAY_BUFFER, SplashMaxParticles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-		glBufferSubData(GL_ARRAY_BUFFER, 0, RainCount * sizeof(GLfloat) * 4, g_particule_position_size_data);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, splashParticlesCount * sizeof(GLfloat) * 4, SplashPosition);
 
 		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
 		glBufferData(GL_ARRAY_BUFFER, SplashMaxParticles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-		glBufferSubData(GL_ARRAY_BUFFER, 0, RainCount * sizeof(GLubyte) * 4, g_particule_color_data);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, splashParticlesCount * sizeof(GLubyte) * 4, SplashColor);
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
