@@ -594,7 +594,7 @@ int main() {
 		glm::mat4 projection = glm::mat4(1.0f);;
 		view = glm::lookAt(cameraFront * radius, glm::vec3(0.0, 0.0, 0.0), cameraUp);
 		// view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-		projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f); 
+		projection = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f); 
 
 		// pass them to the shaders (3 different ways)
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
