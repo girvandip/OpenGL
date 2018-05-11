@@ -141,15 +141,9 @@ create_target_launcher(tugas03_car_camera WORKING_DIRECTORY "${CMAKE_CURRENT_SOU
 # Tugas 04 Car Lighting
 add_executable(tugas04_car_lighting
 	tugas04_car_lighting/main.cpp
-	# tugas04_car_lighting/cube.cpp
-	# tugas04_car_lighting/cube.hpp
-	# tugas04_car_lighting/camera.hpp
-	# tugas04_car_lighting/fs.glsl
 	tugas04_car_lighting/stb_image.h
 	tugas04_car_lighting/ImageLoader.h
 	tugas04_car_lighting/Shader.h
-	# tugas04_car_lighting/CarViewer.cpp
-	# tugas04_car_lighting/vs.glsl
 )
 target_link_libraries(tugas04_car_lighting
 	${ALL_LIBS}
@@ -157,6 +151,24 @@ target_link_libraries(tugas04_car_lighting
 # Xcode and Visual working directories
 set_target_properties(tugas04_car_lighting PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas04_car_lighting/")
 create_target_launcher(tugas04_car_lighting WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas04_car_lighting/")
+
+# SOURCE_GROUP(cube REGULAR_EXPRESSION "cube.*" )
+# SOURCE_GROUP(gals REGULAR_EXPRESSION "*.glsl" )
+
+
+# Tugas 05 Car Particle
+add_executable(tugas05_car_particle
+	tugas05_car_particle/main.cpp
+	tugas05_car_particle/stb_image.h
+	tugas05_car_particle/ImageLoader.h
+	tugas05_car_particle/Shader.h
+)
+target_link_libraries(tugas05_car_particle
+	${ALL_LIBS}
+)
+# Xcode and Visual working directories
+set_target_properties(tugas05_car_particle PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tugas05_car_particle/")
+create_target_launcher(tugas05_car_particle WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tugas05_car_particle/")
 
 # SOURCE_GROUP(cube REGULAR_EXPRESSION "cube.*" )
 # SOURCE_GROUP(gals REGULAR_EXPRESSION "*.glsl" )
@@ -190,6 +202,11 @@ add_custom_command(
 add_custom_command(
    TARGET tugas04_car_lighting POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas04_car_lighting${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas04_car_lighting/"
+)
+
+add_custom_command(
+   TARGET tugas05_car_particle POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tugas05_car_particle${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tugas05_car_particle/"
 )
 
 elseif (${CMAKE_GENERATOR} MATCHES "Xcode" )
