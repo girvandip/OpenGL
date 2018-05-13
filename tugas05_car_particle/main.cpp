@@ -19,6 +19,8 @@ void DrawTriangle(Shader&);
 void DrawWindow(Shader&);
 void DrawLight(Shader&);
 void DrawBrake(Shader&);
+void DrawKnalpot(Shader&);
+void DrawLampu(Shader& ourShader, glm::vec3 position);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 //---------------------------------------------------------------------------
@@ -439,6 +441,7 @@ int main() {
 	ImageLoader texture3("gold.jpg");
 	ImageLoader texture4("pink.jpg");
 	ImageLoader texture5("awesomeface.jpg");
+	ImageLoader textureBlack("black.png");
 	ImageLoader particleTexture("smoke.bmp");
 
 
@@ -612,7 +615,7 @@ int main() {
 		for(int i=0; i<newparticles; i++){
 			int particleIndex = FindUnusedParticle();
 			ParticlesContainer[particleIndex].life = 0.5f; // This particle will live 5 seconds.
-			ParticlesContainer[particleIndex].pos = glm::vec3(1.6f,-1.2f, 3.55f);
+			ParticlesContainer[particleIndex].pos = glm::vec3(1.2f,-1.5f, 3.55f);
 
 			float spread = 1.5f;
 			glm::vec3 maindir = glm::vec3(0.0f, 0.0f, 8.0f);
@@ -1088,8 +1091,7 @@ int main() {
 		texture4.use();
 		glActiveTexture(GL_TEXTURE1);
 		texture3.use();
-		// prog.use();
-
+		
 		// be sure to activate shader when setting uniforms/drawing objects
         prog.use();
         prog.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
@@ -1137,18 +1139,28 @@ int main() {
 		glActiveTexture(GL_TEXTURE0);
 		texture5.use();
 		prog.use();
-		DrawBrake(prog);	
+		DrawBrake(prog);
+
+		//Render Knalpot
+		glActiveTexture(GL_TEXTURE0);
+		textureBlack.use();
+		prog.use();
+		DrawKnalpot(prog);
 
 		// also draw the lamp object
         lampShader.use();
-        lampShader.setMat4("projection", projection);
+		lampShader.setMat4("projection", projection);
         lampShader.setMat4("view", view);
 		model = glm::mat4(1.0f);
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(1.0f)); // a smaller cube
         lampShader.setMat4("model", model);
 		glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);	
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		// glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		// glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		// prog.use();
+		// DrawLampu(prog, lightPos);	
 		
 		// ending
 		glfwSwapBuffers(window);
@@ -1322,6 +1334,31 @@ void DrawBrake(Shader& ourShader) {
 		ourShader.setMat4("model", model);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
+}
+
+void DrawKnalpot(Shader& ourShader) {
+	glm::vec3 cubePositions[] = {
+		glm::vec3(1.2f,  -1.5f, 3.4f),
+	};
+	glm::vec3 cubeScales[] = {
+		glm::vec3(0.35f,  0.25f, 0.3f),
+	};
+	glEnable(GL_DEPTH);
+	// calculate the model matrix for each object and pass it to shader before drawing
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, cubePositions[0]);
+	model = glm::scale(model, cubeScales[0]);
+	ourShader.setMat4("model", model);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+void DrawLampu(Shader& ourShader, glm::vec3 position) {
+	glEnable(GL_DEPTH);
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, position);
+	model = glm::scale(model, glm::vec3(1.0f,  1.0f, 1.0f));
+	ourShader.setMat4("model", model);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 void processInput(GLFWwindow *window)
