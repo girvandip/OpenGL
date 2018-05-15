@@ -452,6 +452,7 @@ int main() {
 	prog.setInt("texture4", 0);
 	prog.setInt("texture5", 0);
 	particleProg.setInt("myTextureSampler", 0); //masih gatau
+	lampShader.setInt("texture2", 0);
 
 	// The VBO containing the 4 vertices of the particles.
 	// Thanks to instancing, they will be shared by all particles.
@@ -487,7 +488,7 @@ int main() {
 
 	bool naik = true;
 	bool naik2 = true;
-	float arrOfLightPos[3] = {-5, 3, 0};
+	float arrOfLightPos[3] = {-5, 4, 0};
 
 	float angle = 0;
 	double lastTime = glfwGetTime();
@@ -632,10 +633,6 @@ int main() {
 
 
 			// // Very bad way to generate a random color
-			// ParticlesContainer[particleIndex].r = rand() % 256;
-			// ParticlesContainer[particleIndex].g = rand() % 256;
-			// ParticlesContainer[particleIndex].b = rand() % 256;
-			// ParticlesContainer[particleIndex].a = (rand() % 256) / 3;
 			ParticlesContainer[particleIndex].r = 150;
 			ParticlesContainer[particleIndex].g = 150;
 			ParticlesContainer[particleIndex].b = 150;
@@ -803,10 +800,6 @@ int main() {
 
 
 			// // Very bad way to generate a random color
-			// RainContainer[raindIndex].r = rand() % 256;
-			// RainContainer[particleIndex].g = rand() % 256;
-			// RainContainer[particleIndex].b = rand() % 256;
-			// RainContainer[particleIndex].a = (rand() % 256) / 3;
 			RainContainer[rainIndex].r = 0;
 			RainContainer[rainIndex].g = 0;
 			RainContainer[rainIndex].b = 255;
@@ -1147,21 +1140,15 @@ int main() {
 		prog.use();
 		DrawKnalpot(prog);
 
-		// also draw the lamp object
-        lampShader.use();
-		lampShader.setMat4("projection", projection);
-        lampShader.setMat4("view", view);
-		model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(1.0f)); // a smaller cube
-        lampShader.setMat4("model", model);
+		//Render Lampu
+		lampShader.use();
+		texture2.use();
+        lampShader.setVec3("objectColor", 1.0f, 1.0f, 1.0f);
+        lampShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        lampShader.setVec3("lightPos", lightPos);
+        lampShader.setVec3("viewPos", glm::vec3(0.0, 0.0, 0.0));
+		DrawLampu(lampShader, lightPos);
 		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		// glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		// glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		// prog.use();
-		// DrawLampu(prog, lightPos);	
-		
 		// ending
 		glfwSwapBuffers(window);
 		glfwPollEvents();

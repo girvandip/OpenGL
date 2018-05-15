@@ -16,7 +16,7 @@ uniform vec3 objectColor;
 void main()
 {
     // ambient
-    float ambientStrength = 0.1;
+    float ambientStrength = 0.3;
     vec3 ambient = ambientStrength * lightColor;
   	
     // diffuse 
@@ -33,7 +33,7 @@ void main()
     vec3 specular = specularStrength * spec * lightColor; 
     // vec3 result = (ambient + diffuse + specular) * objectColor;
     vec3 result = (ambient + diffuse + specular);
-    // FragColor = vec4(result, 1.0) * texture(texture1, TexCoord);
-    FragColor = texture(texture1, TexCoord);
+    FragColor = vec4(result, 1.0) * texture(texture1, TexCoord);
+    // FragColor = texture(texture1, TexCoord);
 
 } 
