@@ -1159,6 +1159,7 @@ void DrawWindow(Shader& ourShader) {
 		glm::vec3(-1.8f, 0.6f, 0.8f),
 		glm::vec3(1.2f, -1.0f, -3.9f),
 		glm::vec3(-1.2f, -1.0f, -3.9f),
+		glm::vec3(0.0f, -2.0f, 0.0f),
 	};
 	glm::vec3 cubeScales[] = {
 		glm::vec3(2.8f,  1.0f, 0.1f),
@@ -1167,9 +1168,10 @@ void DrawWindow(Shader& ourShader) {
 		glm::vec3(0.1f,  1.0f, 4.0f),
 		glm::vec3(0.35f,  0.35f, 0.1f),
 		glm::vec3(0.35f,  0.35f, 0.1f),
+		glm::vec3(9.0f,  0.3f, 12.0f),
 	};
 	glEnable(GL_DEPTH);
-	for (unsigned int i = 0; i < 6; i++)
+	for (unsigned int i = 0; i < 7; i++)
 	{
 		// calculate the model matrix for each object and pass it to shader before drawing
 		glm::mat4 model = glm::mat4(1.0f);
