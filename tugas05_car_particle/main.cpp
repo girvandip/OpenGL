@@ -441,7 +441,7 @@ int main() {
 	ImageLoader texture3("gold.jpg");
 	ImageLoader texture4("pink.jpg");
 	ImageLoader texture5("awesomeface.jpg");
-	ImageLoader textureBlack("black.png");
+	ImageLoader textureBlack("black.jpg");
 	ImageLoader particleTexture("smoke.bmp");
 
 
