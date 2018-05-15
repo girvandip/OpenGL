@@ -842,7 +842,7 @@ int main() {
 					RainColor[4*RainCount+3] = p.a;
 
 					//collision
-					if(p.pos.y <= -1.8f) {
+					if(p.pos.y <= -1.8f || (p.pos.z <= 3.3f && p.pos.z >= -1.55f && p.pos.y <= 1.35f && p.pos.x <= 1.5f && p.pos.x >= -1.5f)) {
 						// printf("masuk sini \n");
 						int splashParticleIndex = FindUnusedSplash();
 						SplashContainer[splashParticleIndex].life = 0.05f;
