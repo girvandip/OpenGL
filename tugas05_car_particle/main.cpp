@@ -62,9 +62,7 @@ Particle SplashContainer[SplashMaxParticles];
 int LastUsedSplash = 0;
 
 // Finds a Particle in ParticlesContainer which isn't used yet.
-// (i.e. life < 0);
 int FindUnusedParticle(){
-
 	for(int i=LastUsedParticle; i<MaxParticles; i++){
 		if (ParticlesContainer[i].life < 0){
 			LastUsedParticle = i;
@@ -83,9 +81,7 @@ int FindUnusedParticle(){
 }
 
 // Finds a Particle in ParticlesContainer which isn't used yet.
-// (i.e. life < 0);
 int FindUnusedRain(){
-
 	for(int i=LastUsedRain; i < RainMaxParticles; i++){
 		if (RainContainer[i].life < 0){
 			LastUsedRain = i;
@@ -104,9 +100,7 @@ int FindUnusedRain(){
 }
 
 // Finds a Particle in ParticlesContainer which isn't used yet.
-// (i.e. life < 0);
 int FindUnusedSplash(){
-
 	for(int i=LastUsedSplash; i < SplashMaxParticles; i++){
 		if (SplashContainer[i].life < 0){
 			LastUsedSplash = i;
@@ -407,8 +401,6 @@ int main() {
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	// glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	// glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_2), vertices_2, GL_STATIC_DRAW);
 	// position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -422,7 +414,6 @@ int main() {
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 
 	// second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
     unsigned int lightVAO;
@@ -455,7 +446,6 @@ int main() {
 	lampShader.setInt("texture2", 0);
 
 	// The VBO containing the 4 vertices of the particles.
-	// Thanks to instancing, they will be shared by all particles.
 	static const GLfloat g_vertex_buffer_data[] = { 
 		 -0.1f, -0.1f, -0.1f,
 		  0.1f, -0.1f, 0.1f,
@@ -497,7 +487,6 @@ int main() {
 
 	while (!glfwWindowShouldClose(window))
 	{
-		
 		processInput(window);
 		glClearColor(0.7f, 0.7f, 0.7f, 0.7f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -597,16 +586,12 @@ int main() {
 		
 		glm::mat4 projection = glm::mat4(1.0f);;
 		view = glm::lookAt(cameraFront * radius, glm::vec3(0.0, 0.0, 0.0), cameraUp);
-		// view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		projection = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f); 
 
 		// pass them to the shaders (3 different ways)
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-
-		// TODO: lampu belum ke render
 		
 		//DRAW SMOKE
 		int newparticles = (int)(delta*10000.0);
@@ -620,9 +605,6 @@ int main() {
 
 			float spread = 1.5f;
 			glm::vec3 maindir = glm::vec3(0.0f, 0.0f, 8.0f);
-			// Very bad way to generate a random direction; 
-			// See for instance http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution instead,
-			// combined with some user-controlled parameters (main direction, spread, etc)
 			glm::vec3 randomdir = glm::vec3(
 				(rand()%2000 - 1000.0f)/1000.0f,
 				(rand()%2000 - 1000.0f)/1000.0f,
@@ -630,72 +612,51 @@ int main() {
 			);
 			
 			ParticlesContainer[particleIndex].speed = maindir + randomdir*spread;
-
-
-			// // Very bad way to generate a random color
 			ParticlesContainer[particleIndex].r = 150;
 			ParticlesContainer[particleIndex].g = 150;
 			ParticlesContainer[particleIndex].b = 150;
 			ParticlesContainer[particleIndex].a = 70;
-
 			ParticlesContainer[particleIndex].size = (rand()%1000)/2000.0f + 0.1f;
-			
 		}
 
 		// Simulate all particles
 		int ParticlesCount = 0;
 		for(int i=0; i<MaxParticles; i++){
-
-			Particle& p = ParticlesContainer[i]; // shortcut
-
+			Particle& p = ParticlesContainer[i];
 			if(p.life > 0.0f){
-
 				// Decrease life
 				p.life -= delta;
 				if (p.life > 0.0f){
-
 					// Simulate simple physics : gravity only, no collisions
 					p.speed += glm::vec3(0.0f, 40.0f, -10.0f) * (float)delta * 0.5f;
 					p.pos += p.speed * (float)delta;
 					p.cameradistance = glm::length2( p.pos - cameraPos );
-					//ParticlesContainer[i].pos += glm::vec3(0.0f,10.0f, 0.0f) * (float)delta;
 
 					// Fill the GPU buffer
 					ParticlePosition[4*ParticlesCount+0] = p.pos.x;
 					ParticlePosition[4*ParticlesCount+2] = p.pos.z;
 					ParticlePosition[4*ParticlesCount+1] = p.pos.y;
-												   
 					ParticlePosition[4*ParticlesCount+3] = p.size;
-												   
 					ParticleColor[4*ParticlesCount+0] = p.r;
 					ParticleColor[4*ParticlesCount+1] = p.g;
 					ParticleColor[4*ParticlesCount+2] = p.b;
 					ParticleColor[4*ParticlesCount+3] = p.a;
-
 				}else{
 					// Particles that just died will be put at the end of the buffer in SortParticles();
 					p.cameradistance = -1.0f;
 				}
-
 				ParticlesCount++;
-
 			}
 		}
 
-		SortParticles(ParticlesContainer, MaxParticles); // for testing
-
+		SortParticles(ParticlesContainer, MaxParticles);
 		// Update the buffers that OpenGL uses for rendering.
-		// There are much more sophisticated means to stream data from the CPU to the GPU, 
-		// but this is outside the scope of this tutorial.
-		// http://www.opengl.org/wiki/Buffer_Object_Streaming
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glBufferData(GL_ARRAY_BUFFER, MaxParticles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
 		glBufferSubData(GL_ARRAY_BUFFER, 0, ParticlesCount * sizeof(GLfloat) * 4, ParticlePosition);
-
 		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
 		glBufferData(GL_ARRAY_BUFFER, MaxParticles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
 		glBufferSubData(GL_ARRAY_BUFFER, 0, ParticlesCount * sizeof(GLubyte) * 4, ParticleColor);
-
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -712,59 +673,50 @@ int main() {
 		glUniform3f(CameraUp_worldspace_ID   , view[0][1], view[1][1], view[2][1]);
 
 		glm::mat4 ViewProjectionMatrix = projection * view;
-
 		glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, &ViewProjectionMatrix[0][0]);
 
-        
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(squareVerticesID);
 		glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
 		glVertexAttribPointer(
-			squareVerticesID,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
+			squareVerticesID, 
+			3,                
+			GL_FLOAT,         
+			GL_FALSE,         
+			0,                
+			(void*)0
 		);
 		
 		// 2nd attribute buffer : positions of particles' centers
 		glEnableVertexAttribArray(xyzsID);
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glVertexAttribPointer(
-			xyzsID,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			4,                                // size : x + y + z + size => 4
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
+			xyzsID,      
+			4,           
+			GL_FLOAT,    
+			GL_FALSE,    
+			0,                             
+			(void*)0                       
 		);
 
 		// 3rd attribute buffer : particles' colors
 		glEnableVertexAttribArray(colorID);
 		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
 		glVertexAttribPointer(
-			colorID,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			4,                                // size : r + g + b + a => 4
-			GL_UNSIGNED_BYTE,                 // type
-			GL_TRUE,                          // normalized?    *** YES, this means that the unsigned char[4] will be accessible with a vec4 (floats) in the shader ***
-			0,                                // stride
-			(void*)0                          // array buffer offset
+			colorID, 
+			4,       
+			GL_UNSIGNED_BYTE,  
+			GL_TRUE,           
+			0,                 
+			(void*)0           
 		);
 
 		// These functions are specific to glDrawArrays*Instanced*.
-		// The first parameter is the attribute buffer we're talking about.
-		// The second parameter is the "rate at which generic vertex attributes advance when rendering multiple instances"
-		// http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribDivisor.xml
 		glVertexAttribDivisorARB(squareVerticesID, 0); // particles vertices : always reuse the same 4 vertices -> 0
 		glVertexAttribDivisorARB(xyzsID, 1); // positions : one per quad (its center)                 -> 1
 		glVertexAttribDivisorARB(colorID, 1); // color : one per quad                                  -> 1
 
 		// Draw the particules !
-		// This draws many times a small triangle_strip (which looks like a quad).
-		// This is equivalent to :
-		// for(i in ParticlesCount) : glDrawArrays(GL_TRIANGLE_STRIP, 0, 4), 
-		// but faster.
 		glDrawArraysInstancedARB(GL_TRIANGLE_STRIP, 0, 4, ParticlesCount);
 
 		glDisableVertexAttribArray(squareVerticesID);
@@ -787,68 +739,53 @@ int main() {
 
 			float spread = 1.5f;
 			glm::vec3 maindir = glm::vec3(0.0f, -8.0f, 0.0f);
-			// Very bad way to generate a random direction; 
-			// See for instance http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution instead,
-			// combined with some user-controlled parameters (main direction, spread, etc)
 			glm::vec3 randomdir = glm::vec3(
 				(rand()%2000 - 1000.0f)/1000.0f,
 				(rand()%2000 - 1000.0f)/1000.0f,
 				(rand()%2000 - 1000.0f)/1000.0f
 			);
-			
 			RainContainer[rainIndex].speed = maindir + randomdir*spread;
-
-
-			// // Very bad way to generate a random color
 			RainContainer[rainIndex].r = 0;
 			RainContainer[rainIndex].g = 0;
 			RainContainer[rainIndex].b = 255;
 			RainContainer[rainIndex].a = 70;
-
 			RainContainer[rainIndex].size = 0.3f; // (rand()%1000)/2000.0f + 0.1f;
-			
 		}
-
-
 
 		// Simulate all particles
 		int RainCount = 0;
 		for(int i=0; i<RainMaxParticles; i++){
-
 			Particle& p = RainContainer[i]; // shortcut
-
 			if(p.life > 0.0f){
-
 				// Decrease life
 				p.life -= delta;
 				if (p.life > 0.0f){
-
 					// Simulate simple physics : gravity only, no collisions
 					p.speed += glm::vec3(0.0f, 0.0f, 0.0f) * (float)delta * 0.5f;
 					p.pos += p.speed * (float)delta;
 					p.cameradistance = glm::length2( p.pos - cameraPos );
-					//RainContainer[i].pos += glm::vec3(0.0f,10.0f, 0.0f) * (float)delta;
 
 					// Fill the GPU buffer
 					RainPosition[4*RainCount+0] = p.pos.x;
 					RainPosition[4*RainCount+1] = p.pos.y;
 					RainPosition[4*RainCount+2] = p.pos.z;
-												   
 					RainPosition[4*RainCount+3] = p.size;
-												   
 					RainColor[4*RainCount+0] = p.r;
 					RainColor[4*RainCount+1] = p.g;
 					RainColor[4*RainCount+2] = p.b;
 					RainColor[4*RainCount+3] = p.a;
 
 					//collision
-					if(p.pos.y <= -1.8f || (p.pos.z <= 3.3f && p.pos.z >= -1.55f && p.pos.y <= 1.35f && p.pos.x <= 1.5f && p.pos.x >= -1.5f)) {
-						// printf("masuk sini \n");
+					if(p.pos.y <= -1.8f || 
+						(p.pos.z <= 3.3f && p.pos.z >= -1.55f && 
+						p.pos.y <= 1.35f && p.pos.x <= 1.5f && 
+						p.pos.x >= -1.5f)) 
+					{
 						int splashParticleIndex = FindUnusedSplash();
 						SplashContainer[splashParticleIndex].life = 0.05f;
 						SplashContainer[splashParticleIndex].pos = glm::vec3(p.pos.x, p.pos.y, p.pos.z);
-						// SplashContainer[splashParticleIndex].speed = glm::vec3(0.0f, 0.0f, 0.0f);
-						// Random color
+					
+						// Splash color
 						SplashContainer[splashParticleIndex].r = 0.0f;
 						SplashContainer[splashParticleIndex].g = 0.0f;
 						SplashContainer[splashParticleIndex].b = 150.0f;
@@ -858,31 +795,23 @@ int main() {
 						// kill the raindrops
 						RainContainer[i].life = -0.1f;
 					}
-
 				} else{
 					// Particles that just died will be put at the end of the buffer in SortParticles();
 					p.cameradistance = -1.0f;
 				}
-
 				RainCount++;
-
 			}
 		}
 
 		SortParticles(RainContainer, RainMaxParticles); // for testing
 
 		// Update the buffers that OpenGL uses for rendering.
-		// There are much more sophisticated means to stream data from the CPU to the GPU, 
-		// but this is outside the scope of this tutorial.
-		// http://www.opengl.org/wiki/Buffer_Object_Streaming
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glBufferData(GL_ARRAY_BUFFER, RainMaxParticles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
 		glBufferSubData(GL_ARRAY_BUFFER, 0, RainCount * sizeof(GLfloat) * 4, RainPosition);
-
 		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
 		glBufferData(GL_ARRAY_BUFFER, RainMaxParticles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
 		glBufferSubData(GL_ARRAY_BUFFER, 0, RainCount * sizeof(GLubyte) * 4, RainColor);
-
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -893,67 +822,55 @@ int main() {
 		particleTexture.use();
 		// Set our "myTextureSampler" sampler to user Texture Unit 0
 		glUniform1i(TextureID, 0);
-
 		// Same as the billboards tutorial
 		glUniform3f(CameraRight_worldspace_ID, view[0][0], view[1][0], view[2][0]);
 		glUniform3f(CameraUp_worldspace_ID   , view[0][1], view[1][1], view[2][1]);
-
 		ViewProjectionMatrix = projection * view;
-
 		glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, &ViewProjectionMatrix[0][0]);
 
-        
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(squareVerticesID);
 		glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
 		glVertexAttribPointer(
-			squareVerticesID,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
+			squareVerticesID,   
+			3,                  
+			GL_FLOAT,           
+			GL_FALSE,           
+			0,                  
+			(void*)0            
 		);
 		
 		// 2nd attribute buffer : positions of particles' centers
 		glEnableVertexAttribArray(xyzsID);
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glVertexAttribPointer(
-			xyzsID,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			4,                                // size : x + y + z + size => 4
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
+			xyzsID,              
+			4,                   
+			GL_FLOAT,            
+			GL_FALSE,            
+			0,                   
+			(void*)0             
 		);
 
 		// 3rd attribute buffer : particles' colors
 		glEnableVertexAttribArray(colorID);
 		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
 		glVertexAttribPointer(
-			colorID,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			4,                                // size : r + g + b + a => 4
-			GL_UNSIGNED_BYTE,                 // type
-			GL_TRUE,                          // normalized?    *** YES, this means that the unsigned char[4] will be accessible with a vec4 (floats) in the shader ***
-			0,                                // stride
-			(void*)0                          // array buffer offset
+			colorID,       
+			4,             
+			GL_UNSIGNED_BYTE,
+			GL_TRUE,         
+			0,               
+			(void*)0         
 		);
 
 		// These functions are specific to glDrawArrays*Instanced*.
-		// The first parameter is the attribute buffer we're talking about.
-		// The second parameter is the "rate at which generic vertex attributes advance when rendering multiple instances"
-		// http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribDivisor.xml
 		glVertexAttribDivisorARB(squareVerticesID, 0); // particles vertices : always reuse the same 4 vertices -> 0
 		glVertexAttribDivisorARB(xyzsID, 1); // positions : one per quad (its center)                 -> 1
 		glVertexAttribDivisorARB(colorID, 1); // color : one per quad                                  -> 1
 
-		// Draw the particules !
-		// This draws many times a small triangle_strip (which looks like a quad).
-		// This is equivalent to :
-		// for(i in RainCount) : glDrawArrays(GL_TRIANGLE_STRIP, 0, 4), 
-		// but faster.
+		// Draw the particules
 		glDrawArraysInstancedARB(GL_TRIANGLE_STRIP, 0, 4, RainCount);
-
 		glDisableVertexAttribArray(squareVerticesID);
 		glDisableVertexAttribArray(xyzsID);
 		glDisableVertexAttribArray(colorID);
@@ -988,9 +905,6 @@ int main() {
 		SortParticles(SplashContainer, SplashMaxParticles);
 
 		// Update the buffers that OpenGL uses for rendering.
-		// There are much more sophisticated means to stream data from the CPU to the GPU, 
-		// but this is outside the scope of this tutorial.
-		// http://www.opengl.org/wiki/Buffer_Object_Streaming
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glBufferData(GL_ARRAY_BUFFER, SplashMaxParticles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
 		glBufferSubData(GL_ARRAY_BUFFER, 0, splashParticlesCount * sizeof(GLfloat) * 4, SplashPosition);
@@ -1007,75 +921,62 @@ int main() {
 		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
 		particleTexture.use();
-		// Set our "myTextureSampler" sampler to user Texture Unit 0
 		glUniform1i(TextureID, 0);
 
 		// Same as the billboards tutorial
 		glUniform3f(CameraRight_worldspace_ID, view[0][0], view[1][0], view[2][0]);
 		glUniform3f(CameraUp_worldspace_ID   , view[0][1], view[1][1], view[2][1]);
-
 		ViewProjectionMatrix = projection * view;
-
 		glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, &ViewProjectionMatrix[0][0]);
 
-        
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(squareVerticesID);
 		glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
 		glVertexAttribPointer(
-			squareVerticesID,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
+			squareVerticesID,  
+			3,                 
+			GL_FLOAT,          
+			GL_FALSE,          
+			0,                 
+			(void*)0           
 		);
 		
 		// 2nd attribute buffer : positions of particles' centers
 		glEnableVertexAttribArray(xyzsID);
 		glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 		glVertexAttribPointer(
-			xyzsID,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			4,                                // size : x + y + z + size => 4
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
+			xyzsID,   
+			4,        
+			GL_FLOAT, 
+			GL_FALSE, 
+			0,        
+			(void*)0  
 		);
 
 		// 3rd attribute buffer : particles' colors
 		glEnableVertexAttribArray(colorID);
 		glBindBuffer(GL_ARRAY_BUFFER, particles_color_buffer);
 		glVertexAttribPointer(
-			colorID,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			4,                                // size : r + g + b + a => 4
-			GL_UNSIGNED_BYTE,                 // type
-			GL_TRUE,                          // normalized?    *** YES, this means that the unsigned char[4] will be accessible with a vec4 (floats) in the shader ***
-			0,                                // stride
-			(void*)0                          // array buffer offset
+			colorID,   
+			4,         
+			GL_UNSIGNED_BYTE,
+			GL_TRUE,         
+			0,               
+			(void*)0         
 		);
 
 		// These functions are specific to glDrawArrays*Instanced*.
-		// The first parameter is the attribute buffer we're talking about.
-		// The second parameter is the "rate at which generic vertex attributes advance when rendering multiple instances"
-		// http://www.opengl.org/sdk/docs/man/xhtml/glVertexAttribDivisor.xml
 		glVertexAttribDivisorARB(squareVerticesID, 0); // particles vertices : always reuse the same 4 vertices -> 0
 		glVertexAttribDivisorARB(xyzsID, 1); // positions : one per quad (its center)                 -> 1
 		glVertexAttribDivisorARB(colorID, 1); // color : one per quad                                  -> 1
 
-		// Draw the particules !
-		// This draws many times a small triangle_strip (which looks like a quad).
-		// This is equivalent to :
-		// for(i in RainCount) : glDrawArrays(GL_TRIANGLE_STRIP, 0, 4), 
-		// but faster.
+		// Draw the particules 
 		glDrawArraysInstancedARB(GL_TRIANGLE_STRIP, 0, 4, RainCount);
-
 		glDisableVertexAttribArray(squareVerticesID);
 		glDisableVertexAttribArray(xyzsID);
 		glDisableVertexAttribArray(colorID);
 
 		//LIGHT AND CAR
-
 		glm::vec3 lightPos(arrOfLightPos[0], arrOfLightPos[1], arrOfLightPos[2]);
 		//bind textures on corresponding texture units
 		glActiveTexture(GL_TEXTURE0);
@@ -1149,6 +1050,7 @@ int main() {
         lampShader.setVec3("viewPos", glm::vec3(0.0, 0.0, 0.0));
 		DrawLampu(lampShader, lightPos);
 		glBindVertexArray(lightVAO);
+		
 		// ending
 		glfwSwapBuffers(window);
 		glfwPollEvents();
